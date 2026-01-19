@@ -1,0 +1,9 @@
+output/
+test_scan/
+test_output*/
+__pycache__/
+*.pyc
+.vs/
+.idea/
+venv/
+*.log
