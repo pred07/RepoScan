@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AJAX Detection Demo - RepoScan</title>
+</head>
+
+<body>
+    <h1>AJAX Detection Sample Page</h1>
+    <p>This page contains various AJAX patterns for testing RepoScan's detection capabilities.</p>
+
+    <!-- ========================================
+         TEST 1: jQuery $.ajax() - Clean
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: '/api/users',
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    console.log('Users loaded:', data);
+                    $('#user-list').html(data);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Failed to load users:', error);
+                }
+            });
+        });
+    </script>
+
+    <!-- ========================================
+         TEST 2: Fetch API with Template Literal
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        const API_BASE = 'https://api.example.com';
+
+        fetch(`${API_BASE}/posts`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => {
+                console.log('Posts:', data);
+                displayPosts(data);
+            })
+            .catch(error => console.error('Error:', error));
+    </script>
+
+    <!-- ========================================
+         TEST 3: XMLHttpRequest - Classic Pattern
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        function loadData() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/data', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    console.log('Data loaded:', data);
+                }
+            };
+            xhr.send();
+        }
+    </script>
+
+    <!-- ========================================
+         TEST 4: jQuery $.get() with Server-Side URL
+         Expected: RED (Has server deps, Inline)
+         ======================================== -->
+    <script>
+        $('#load-btn').click(function () {
+            $.get('@Url.Action("GetUsers", "Home")', function (data) {
+                $('#results').html(data);
+            });
+        });
+    </script>
+
+    <!-- ========================================
+         TEST 5: Axios GET Request
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        axios.get('/api/products')
+            .then(response => {
+                console.log('Products:', response.data);
+                renderProducts(response.data);
+            })
+            .catch(error => {
+                console.error('Error loading products:', error);
+            });
+    </script>
+
+    <!-- ========================================
+         TEST 6: jQuery $.post() - Form Submission
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        $('#submit-form').on('submit', function (e) {
+            e.preventDefault();
+
+            var formData = {
+                name: $('#name').val(),
+                email: $('#email').val()
+            };
+
+            $.post('/api/submit', formData, function (response) {
+                alert('Form submitted successfully!');
+                console.log('Response:', response);
+            });
+        });
+    </script>
+
+    <!-- ========================================
+         TEST 7: Fetch with Concatenated URL
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        const baseUrl = '/api';
+        const endpoint = '/comments';
+
+        fetch(baseUrl + endpoint)
+            .then(res => res.json())
+            .then(comments => {
+                console.log('Comments:', comments);
+            });
+    </script>
+
+    <!-- ========================================
+         TEST 8: jQuery $.getJSON()
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        $.getJSON('/api/config.json', function (config) {
+            console.log('Config loaded:', config);
+            applyConfiguration(config);
+        });
+    </script>
+
+    <!-- ========================================
+         TEST 9: Axios POST with Server-Side Data
+         Expected: RED (Has server deps, Inline)
+         ======================================== -->
+    <script>
+        var userId = '@Model.UserId';
+        var apiToken = '@ViewBag.ApiToken';
+
+        axios.post('/api/authenticate', {
+            userId: userId,
+            token: apiToken
+        }).then(response => {
+            console.log('Authenticated:', response.data);
+        });
+    </script>
+
+    <!-- ========================================
+         TEST 10: Fetch with Dynamic Variable URL
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        const apiEndpoint = getApiEndpoint(); // Dynamic function
+
+        fetch(apiEndpoint)
+            .then(response => response.json())
+            .then(data => console.log(data));
+    </script>
+
+    <!-- ========================================
+         TEST 11: jQuery $.load() - Load HTML
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        $('#content-div').load('/partials/user-profile.html', function (response, status) {
+            if (status === 'success') {
+                console.log('Content loaded');
+            }
+        });
+    </script>
+
+    <!-- ========================================
+         TEST 12: Regular JavaScript (NO AJAX)
+         Expected: NOT in AJAX tab
+         ======================================== -->
+    <script>
+        function calculateTotal(items) {
+            return items.reduce((sum, item) => sum + item.price, 0);
+        }
+
+        const items = [{ price: 10 }, { price: 20 }];
+        console.log('Total:', calculateTotal(items));
+    </script>
+
+    <!-- ========================================
+         TEST 13: Axios with Multiple Methods
+         Expected: Green (No server deps, Inline)
+         ======================================== -->
+    <script>
+        // PUT request
+        axios.put('/api/users/123', {
+            name: 'Updated Name'
+        });
+
+        // DELETE request
+        axios.delete('/api/users/456');
+
+        // PATCH request
+        axios.patch('/api/users/789', {
+            status: 'active'
+        });
+    </script>
+
+    <div id="user-list"></div>
+    <div id="results"></div>
+    <div id="content-div"></div>
+
+    <form id="submit-form">
+        <input type="text" id="name" placeholder="Name">
+        <input type="email" id="email" placeholder="Email">
+        <button type="submit">Submit</button>
+    </form>
+
+    <button id="load-btn">Load Users</button>
+</body>
+
+</html>

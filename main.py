@@ -22,10 +22,10 @@ def cleanup_old_reports(output_folder: str):
     if not os.path.exists(output_folder):
         return
         
-    pattern = os.path.join(output_folder, "InlineCode_Scan_*.xlsx")
+    pattern = os.path.join(output_folder, "Analysis.xlsx")
     files = glob.glob(pattern)
     if files:
-        logging.info(f"Cleaning up {len(files)} old report(s) in {output_folder}...")
+        logging.info(f"Cleaning up old report(s) in {output_folder}...")
         for f in files:
             try:
                 os.remove(f)

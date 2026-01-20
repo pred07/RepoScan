@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dummy App - Index</title>
+    <!-- Inline CSS (Detectable) -->
+    <link rel="stylesheet" href="/css/index.html_styleblock_line9-35.css" />
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hero">
+        <h1>Welcome to Dummy App</h1>
+        <p>A testbed for RepoScan Security Tool</p>
+
+        <!-- Inline Event Handler (Detectable) -->
+        <!-- TODO: Refactor onclick to index.html_onclick_line47-47.js -->
+        <button class="btn" onclick="alert('Hello World! Inline handler works.')">Click Me</button>
+
+        <!-- JS URI (Detectable) -->
+        <!-- TODO: Refactor onclick to index.html_onclick_line50-50.js -->
+        <!-- TODO: Refactor jsuri to index.html_jsuri_line50-50.js -->
+        <!-- TODO: Refactor inline style to index.html_inlinestyle_line50-50.css -->
+        <a href="javascript:void(0)" onclick="console.log('Link clicked')"
+            style="color: white; margin-left: 20px;">Console Log</a>
+    </div>
+
+    <!-- TODO: Refactor inline style to index.html_inlinestyle_line54-54.css -->
+    <div id="content" style="margin-top: 30px;">
+        <p>This is some static content.</p>
+    </div>
+
+    <!-- Inline Script Block (Detectable) -->
+    <script src="/js/index.html_scriptblock_line59-67.js"></script>
+        setInterval(updateTime, 1000);
+    </script>
+
+</body>
+
+</html>

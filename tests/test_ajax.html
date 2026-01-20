@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AJAX Test Page</title>
+</head>
+<body>
+    <h1>Testing AJAX Detection</h1>
+    
+    <!-- Test 1: jQuery AJAX with literal URL -->
+    <script>
+        $.ajax({
+            url: '/api/users',
+            method: 'GET',
+            success: function(data) {
+                console.log(data);
+            }
+        });
+    </script>
+    
+    <!-- Test 2: Fetch API with template literal -->
+    <script>
+        const API_URL = 'https://api.example.com';
+        fetch(`${API_URL}/posts`)
+            .then(response => response.json())
+            .then(data => console.log(data));
+    </script>
+    
+    <!-- Test 3: XMLHttpRequest -->
+    <script>
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/data', true);
+        xhr.send();
+    </script>
+    
+    <!-- Test 4: AJAX with server-side URL (ASP.NET Razor) -->
+    <script>
+        $.get('@Url.Action("GetUsers", "Home")', function(data) {
+            console.log(data);
+        });
+    </script>
+    
+    <!-- Test 5: Axios -->
+    <script>
+        axios.get('/api/products')
+            .then(response => console.log(response.data));
+    </script>
+    
+    <!-- Test 6: jQuery $.post -->
+    <script>
+        $.post('/api/submit', {name: 'John'}, function(response) {
+            alert('Success');
+        });
+    </script>
+    
+    <!-- Test 7: Regular JavaScript (no AJAX) -->
+    <script>
+        function regularFunction() {
+            console.log('This is not AJAX');
+            return true;
+        }
+    </script>
+</body>
+</html>
