@@ -112,8 +112,9 @@ class Reporter:
         ]
         df_complexity = df_inv[cols_complexity] if not df_inv.empty else pd.DataFrame(columns=cols_complexity)
 
-        # Rename Directory to Folder Path for clarity in File_Details tab
+        # Rename Directory to Folder Path for consistency across all tabs
         df_details = df_details.rename(columns={'Directory': 'Folder Path'})
+        df_complexity = df_complexity.rename(columns={'Directory': 'Folder Path'})
 
         # --- Write to Excel ---
         print(f"Generating report at {output_file}...")
