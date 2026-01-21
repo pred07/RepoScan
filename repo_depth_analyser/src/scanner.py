@@ -90,19 +90,27 @@ class Scanner:
             'ajax_calls': 0, 'dynamic_js': 0, 'dynamic_css': 0
         }
         
+        _, ext = os.path.splitext(filepath)
+        ext = ext.lower()
+        
+        # Relevant Extensions for Client-Side Code
+        web_exts = {'.html', '.htm', '.aspx', '.ascx', '.cshtml', '.master', '.php', '.jsp', '.js', '.ts', '.vue', '.jsx', '.tsx'}
+        
         try:
             with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
                 metrics['lines'] = len(content.splitlines())
                 
-                # Run Regex Analysis
-                metrics['inline_css'] = len(self.patterns['inline_css'].findall(content))
-                metrics['internal_css'] = len(self.patterns['internal_css'].findall(content))
-                metrics['inline_js'] = len(self.patterns['inline_js'].findall(content))
-                metrics['internal_js'] = len(self.patterns['internal_js'].findall(content))
-                metrics['ajax_calls'] = len(self.patterns['ajax_call'].findall(content))
-                metrics['dynamic_js'] = len(self.patterns['dynamic_js'].findall(content))
-                metrics['dynamic_css'] = len(self.patterns['dynamic_css'].findall(content))
+                # Only analyze web-related files for Client-Side patterns
+                if ext in web_exts:
+                    # Run Regex Analysis
+                    metrics['inline_css'] = len(self.patterns['inline_css'].findall(content))
+                    metrics['internal_css'] = len(self.patterns['internal_css'].findall(content))
+                    metrics['inline_js'] = len(self.patterns['inline_js'].findall(content))
+                    metrics['internal_js'] = len(self.patterns['internal_js'].findall(content))
+                    metrics['ajax_calls'] = len(self.patterns['ajax_call'].findall(content))
+                    metrics['dynamic_js'] = len(self.patterns['dynamic_js'].findall(content))
+                    metrics['dynamic_css'] = len(self.patterns['dynamic_css'].findall(content))
                 
         except Exception as e:
             print(f"Error reading {filepath}: {e}")
