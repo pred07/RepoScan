@@ -10,6 +10,13 @@ class Scanner:
         self.file_inventory = []
         self.directory_stats = collections.defaultdict(lambda: {'count': 0, 'lines': 0})
         
+        # Folders to exclude (dependencies, build outputs, version control)
+        self.excluded_folders = {
+            'node_modules', 'vendor', 'packages', '.git', '.svn', '.hg',
+            'bin', 'obj', 'dist', 'build', 'out', 'target',
+            '__pycache__', '.pytest_cache', '.venv', 'venv', 'env'
+        }
+        
         # Compile Regex Patterns
         self.patterns = {
             'inline_css': re.compile(r'style\s*=\s*["\'][^"\']*["\']', re.IGNORECASE),
@@ -79,6 +86,9 @@ class Scanner:
         # Collect all files to scan
         all_files = []
         for root, dirs, files in os.walk(self.target_dir):
+            # Filter out excluded directories (modifies dirs in-place)
+            dirs[:] = [d for d in dirs if d not in self.excluded_folders]
+            
             for file in files:
                 all_files.append((root, file))
                 

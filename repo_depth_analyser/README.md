@@ -69,3 +69,14 @@ The **Complexity_Metrics** tab provides granular code complexity insights:
 ## Performance
 
 The tool uses multithreading (10 workers by default) to process files concurrently, making it suitable for large codebases.
+
+### Excluded Folders
+
+To maintain accuracy on source code while avoiding dependency bloat, the following folders are automatically excluded:
+
+**Dependencies**: `node_modules`, `vendor`, `packages`  
+**Version Control**: `.git`, `.svn`, `.hg`  
+**Build Outputs**: `bin`, `obj`, `dist`, `build`, `out`, `target`  
+**Virtual Environments**: `venv`, `env`, `.venv`, `__pycache__`, `.pytest_cache`
+
+This ensures 100% accuracy on your source code while skipping thousands of third-party files.
