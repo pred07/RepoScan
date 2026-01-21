@@ -117,6 +117,19 @@ def main():
                 modifications[orig_rel_path] = []
             modifications[orig_rel_path].append(meta)
 
+
+def is_safe_code(content):
+    """
+    Checks if code contains server-side logic that cannot be externalized.
+    """
+    server_patterns = [
+        r'<%', r'@Model', r'@ViewBag', r'@ViewData', r'\{\{', r'\bResponse\.Write\b'
+    ]
+    for pattern in server_patterns:
+        if re.search(pattern, content, re.IGNORECASE):
+            return False
+    return True
+
     # 3. Process Files (The Copy)
     for rel_path, mods in modifications.items():
         # Sort desc by line number
@@ -147,14 +160,29 @@ def main():
 
             replacement = []
             
+            # READ EXTRACTED CONTENT FOR SAFETY CHECK
+            extracted_path = os.path.join(args.extracted, 'inline_javascript' if 'script' in mod['code_type'] or 'js' in mod['ext'] else 'inline_css', mod['extracted_file'])
+            is_safe = True
+            try:
+                if os.path.exists(extracted_path):
+                    with open(extracted_path, 'r', encoding='utf-8', errors='ignore') as ef:
+                        content = ef.read()
+                        if not is_safe_code(content):
+                            is_safe = False
+            except:
+                pass # If extraction failed, assume unsafe or handle gracefully
+
             if mod['code_type'] == 'scriptblock':
-                src_ref = f"/js/{mod['extracted_file']}"
-                replacement.append(f'{indent}<script src="{src_ref}"></script>\n')
-                
-                # Replace lines
-                lines[start_idx:end_idx] = replacement
+                if is_safe:
+                    src_ref = f"/js/{mod['extracted_file']}"
+                    replacement.append(f'{indent}<script src="{src_ref}"></script>\n')
+                    lines[start_idx:end_idx] = replacement
+                else:
+                    # BLOCKED: Insert Comment, Keep Code
+                    lines.insert(start_idx, f"{indent}<!-- TODO: Refactor Blocked Script [Server-Side Logic Detected] -->\n")
                 
             elif mod['code_type'] == 'styleblock':
+                # CSS usually safe, but check anyway if needed. Assuming CSS safer for now or apply same logic.
                 href_ref = f"/css/{mod['extracted_file']}"
                 replacement.append(f'{indent}<link rel="stylesheet" href="{href_ref}" />\n')
                 lines[start_idx:end_idx] = replacement

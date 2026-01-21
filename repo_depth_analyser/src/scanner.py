@@ -19,39 +19,66 @@ class Scanner:
         
         # Compile Regex Patterns - Matching main utility's comprehensive detection
         self.patterns = {
-            # CSS Detection
+            # 1. Inline & Internal CSS
             'inline_css': re.compile(r'style\s*=\s*["\'][^"\']*["\']', re.IGNORECASE),
-            'internal_css': re.compile(r'<style[^>]*>.*?</style>', re.IGNORECASE | re.DOTALL),
-            
-            # JavaScript Detection - Comprehensive event handlers
+            'internal_css': re.compile(
+                r'(<style\b[^>]*>[\s\S]*?</style>|<link\b[^>]*rel\s*=\s*["\']stylesheet["\'][^>]*>)',
+                re.IGNORECASE | re.DOTALL
+            ),
+
+            # 2. Inline & Internal JS
             'inline_js': re.compile(
-                r'\b(onclick|ondblclick|onmousedown|onmouseup|onmouseover|onmousemove|onmouseout|'
-                r'onmouseenter|onmouseleave|oncontextmenu|onkeydown|onkeypress|onkeyup|onsubmit|'
-                r'onreset|onchange|oninput|onfocus|onblur|onselect|onload|onunload|onbeforeunload|'
-                r'onresize|onscroll|onerror|onabort|onplay|onpause|onvolumechange|ontimeupdate|'
-                r'ondrag|ondragstart|ondragend|ondrop)\s*=|javascript:',
+                r'(\bon\w+\s*=\s*["\'][^"\']*["\']|href=["\']\s*javascript:)', 
                 re.IGNORECASE
             ),
-            'internal_js': re.compile(r'<script[^>]*>.*?</script>', re.IGNORECASE | re.DOTALL),
-            
-            # AJAX Detection - Comprehensive (matches main utility)
+            'internal_js': re.compile(
+                r'(<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?</script>|<script\b[^>]*src\s*=\s*["\'][^"\']+["\'])',
+                re.IGNORECASE | re.DOTALL
+            ),
+
+            # 3. AJAX / Network Calls
             'ajax_call': re.compile(
-                r'(\b[A-Za-z_$]\w*\s*\.\s*(?:ajax|get|post|getJSON|getScript|load)\s*\('
-                r'|new\s+XMLHttpRequest\s*\('
-                r'|\bfetch\s*\('
-                r'|new\s+ActiveXObject\s*\('
-                r'|\baxios(?:\.\w+)?\s*\('
-                r'|setRequestHeader\s*\(\s*["\']X-Requested-With["\'])',
+                r'(\bfetch\s*\(|'
+                r'new\s+XMLHttpRequest\s*\(|'
+                r'\.open\s*\(\s*["\'](?:GET|POST|PUT|DELETE|PATCH)["\']|'
+                r'\baxios(?:\.\w+)?\s*\(|'
+                r'\$\.ajax\s*\(|'
+                r'\$\.get\s*\(|'
+                r'\$\.post\s*\(|'
+                r'new\s+WebSocket\s*\(|'
+                r'new\s+EventSource\s*\()',
                 re.IGNORECASE
             ),
-            
-            # Dynamic Resource Generation
+
+            # 4. JS Loading CSS or JS (Dynamic)
             'dynamic_js': re.compile(
-                r'(document\.createElement\s*\([\'"]script[\'"]\)|eval\s*\(|new\s+Function\s*\(|document\.write\s*\([^)]*<script)',
+                r'(\.src\s*=\s*["\'][^"\']+\.js["\']|'
+                r'document\.createElement\s*\(\s*["\']script["\']\s*\)|'
+                r'\.appendChild\s*\([^)]*script[^)]*\)|'
+                r'\.insertBefore\s*\([^)]*script[^)]*\)|'
+                r'eval\s*\(|'
+                r'new\s+Function\s*\(|'
+                r'setTimeout\s*\(|'
+                r'setInterval\s*\(|'
+                r'import\s*\(|'
+                r'System\.import\s*\(|'
+                r'require\s*\(|'
+                r'innerHTML\s*=)',
                 re.IGNORECASE
             ),
             'dynamic_css': re.compile(
-                r'(document\.createElement\s*\([\'"]style[\'"]\)|document\.createElement\s*\([\'"]link[\'"]\)|document\.write\s*\([^)]*<style)',
+                r'(\.src\s*=\s*["\'][^"\']+\.css["\']|'  # Specific catch for some frameworks/loaders
+                r'document\.createElement\s*\(\s*["\']style["\']\s*\)|'
+                r'document\.createElement\s*\(\s*["\']link["\']\s*\)|'
+                r'\.rel\s*=\s*["\']stylesheet["\']|'
+                r'\.href\s*=\s*["\'][^"\']+\.css["\']|'
+                r'\.style\.\w+\s*=|'
+                r'\.style\[\s*["\'][^"\']+["\']\s*\]\s*=|'
+                r'setProperty\s*\(|'
+                r'insertRule\s*\(|'
+                r'addRule\s*\(|'
+                r'new\s+CSSStyleSheet\s*\(|'
+                r'adoptedStyleSheets)',
                 re.IGNORECASE
             )
         }
