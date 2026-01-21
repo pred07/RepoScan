@@ -9,11 +9,15 @@ A comprehensive toolchain for auditing, assessing, and refactoring inline JavaSc
 
 **Key Capabilities**:
 1.  **Scan**: Identify all inline scripts, styles, event handlers, and `javascript:` URIs.
-2.  **AJAX Detection**: Automatically detect and analyze all AJAX calls (jQuery, Fetch, Axios, XMLHttpRequest) with endpoint extraction and server dependency analysis.
+2.  **AJAX & Dynamic Detection**: Automatically detect and analyze all AJAX calls (including WebSockets) and Dynamic Code Sinks (`innerHTML`, `eval`) with exhaustive occurrence counting.
 3.  **Assess**: Grade the difficulty of refactoring each file based on complexity.
 4.  **Refactor**: Automatically move inline code to external files and update the source code in a safe, copy-first manner.
+5.  **Inventory**: Deep codebase analysis with `repo_depth_analyser`.
 
 ---
+
+> [!TIP]
+> **Detailed Specs**: For a deep-dive into the detection logic and optimization patterns, see [TOOL_FUNCTIONALITY.md](file:///c:/Users/groot/Music/susu/RepoScan/TOOL_FUNCTIONALITY.md).
 
 ## 2. Quick Start & Installation
 
@@ -85,9 +89,9 @@ python main.py --root "C:\Path\To\YourApp" --output "output"
 **Outputs (in `output/`)**:
 *   `InlineCode_Scan_<Date>.xlsx`: Detailed audit report with **5 tabs**:
     *   **Summary**: Statistics and metadata
-    *   **Inline JavaScript**: All JS findings
+    *   **Inline JavaScript**: All JS findings with **Dynamic Code** flags
     *   **Inline CSS**: All CSS findings
-    *   **AJAX Code**: 🆕 Dedicated AJAX analysis with pattern detection, endpoint URLs, and server dependency flags
+    *   **AJAX Code**: 🆕 Dedicated AJAX analysis with pattern detection, endpoint URLs, and literal occurrence counts
     *   **External Resources**: External scripts and stylesheets
 *   `Refactoring_Assessment.xlsx`: **The Tracker**. Prioritizes work:
     *   🟢 **Ready**: Safe to refactor automatically.
@@ -99,17 +103,24 @@ python main.py --root "C:\Path\To\YourApp" --output "output"
 
 The scanner automatically detects and analyzes all AJAX patterns in your codebase:
 
-**Supported AJAX Patterns** (8 types):
-- ✅ **XMLHttpRequest**: `new XMLHttpRequest()`
+**Supported AJAX Patterns** (Exhaustive Detection):
+- ✅ **XMLHttpRequest**: `new XMLHttpRequest()`, `onreadystatechange`, `.send()`
 - ✅ **jQuery**: `$.ajax()`, `$.get()`, `$.post()`, `$.getJSON()`, `$.load()`
 - ✅ **Fetch API**: `fetch()`, `window.fetch()`
 - ✅ **Axios**: `axios.get()`, `axios.post()`, `axios.put()`, `axios.delete()`, etc.
+- ✅ **Real-Time**: `WebSocket`, `EventSource`
+
+**Dynamic Code Patterns (Security Sinks)**:
+- ⚡ **DOM Sinks**: `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`
+- ⚡ **JS Sinks**: `eval()`, `new Function()`, `setTimeout(string)`
+- ⚡ **Dynamic Load**: `document.createElement('script')`, setting `.src` or `.href`
 
 **AJAX Tab Columns**:
-1. **AJAX Type**: Pattern detected (e.g., `jquery_ajax`, `fetch_api`)
-2. **Endpoint/URL**: Extracted API endpoint
-3. **Has Server Dependencies**: 🔴 Red (Yes) / 🟢 Green (No)
-4. **Is Inline**: 🟡 Yellow (Yes) / No color (No)
+1. **Count**: 🆕 Number of individual calls found within the block
+2. **AJAX Type**: Pattern detected (e.g., `jquery_ajax`, `fetch_api`)
+3. **Endpoint/URL**: Extracted API endpoint
+4. **Has Server Dependencies**: 🔴 Red (Yes) / 🟢 Green (No)
+5. **Is Inline**: 🟡 Yellow (Yes) / No color (No)
 
 **Color Coding Guide**:
 - 🔴 **Red (Server Dependencies)**: Contains `@Model`, `@ViewBag`, `<%=`, etc. - Requires refactoring before extraction
