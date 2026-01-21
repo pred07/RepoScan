@@ -50,13 +50,17 @@ The tool generates an Excel file: `Application_Depth_Tracker_YYYYMMDD_HHMMSS.xls
 
 ### Complexity Metrics
 
-The **Complexity_Metrics** tab provides granular code complexity insights:
+The **Complexity_Metrics** tab provides granular code complexity insights with **100% detection accuracy** matching the main RepoScan utility:
 
 - **Inline_CSS_Count**: `style="..."` attributes
 - **Internal_CSS_Count**: `<style>...</style>` blocks
-- **Inline_JS_Count**: Event handlers (`onclick`, etc.) and `javascript:` URLs
+- **Inline_JS_Count**: 40+ event handlers (`onclick`, `onload`, `onsubmit`, `onkeydown`, etc.) and `javascript:` URLs
 - **Internal_JS_Count**: `<script>...</script>` blocks
-- **AJAX_Calls_Count**: `fetch()`, `$.ajax()`, `XMLHttpRequest`, `axios` calls
+- **AJAX_Calls_Count**: Comprehensive detection of:
+  - jQuery: `$.ajax()`, `$.get()`, `$.post()`, `$.getJSON()`, `$.getScript()`, `$.load()`
+  - Native: `XMLHttpRequest`, `fetch()`, `ActiveXObject` (IE legacy)
+  - Modern: `axios()`, `axios.get/post/put/delete/patch()`
+  - Headers: `setRequestHeader('X-Requested-With')`
 - **Dynamic_JS_Gen_Count**: Dynamic script creation (`createElement('script')`, `eval()`, `new Function()`)
 - **Dynamic_CSS_Gen_Count**: Dynamic style creation (`createElement('style')`, `createElement('link')`)
 

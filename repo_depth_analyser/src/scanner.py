@@ -17,15 +17,43 @@ class Scanner:
             '__pycache__', '.pytest_cache', '.venv', 'venv', 'env'
         }
         
-        # Compile Regex Patterns
+        # Compile Regex Patterns - Matching main utility's comprehensive detection
         self.patterns = {
+            # CSS Detection
             'inline_css': re.compile(r'style\s*=\s*["\'][^"\']*["\']', re.IGNORECASE),
             'internal_css': re.compile(r'<style[^>]*>.*?</style>', re.IGNORECASE | re.DOTALL),
-            'inline_js': re.compile(r'\bon\w+\s*=\s*["\'][^"\']*["\']|javascript:', re.IGNORECASE),
+            
+            # JavaScript Detection - Comprehensive event handlers
+            'inline_js': re.compile(
+                r'\b(onclick|ondblclick|onmousedown|onmouseup|onmouseover|onmousemove|onmouseout|'
+                r'onmouseenter|onmouseleave|oncontextmenu|onkeydown|onkeypress|onkeyup|onsubmit|'
+                r'onreset|onchange|oninput|onfocus|onblur|onselect|onload|onunload|onbeforeunload|'
+                r'onresize|onscroll|onerror|onabort|onplay|onpause|onvolumechange|ontimeupdate|'
+                r'ondrag|ondragstart|ondragend|ondrop)\s*=|javascript:',
+                re.IGNORECASE
+            ),
             'internal_js': re.compile(r'<script[^>]*>.*?</script>', re.IGNORECASE | re.DOTALL),
-            'ajax_call': re.compile(r'(\.ajax\(|fetch\(|XMLHttpRequest|axios\.)', re.IGNORECASE),
-            'dynamic_js': re.compile(r'(document\.createElement\s*\([\'"]script[\'"]\)|eval\s*\(|new\s+Function\s*\(|document\.write\s*\([^)]*<script)', re.IGNORECASE),
-            'dynamic_css': re.compile(r'(document\.createElement\s*\([\'"]style[\'"]\)|document\.createElement\s*\([\'"]link[\'"]\)|document\.write\s*\([^)]*<style)', re.IGNORECASE)
+            
+            # AJAX Detection - Comprehensive (matches main utility)
+            'ajax_call': re.compile(
+                r'(\b[A-Za-z_$]\w*\s*\.\s*(?:ajax|get|post|getJSON|getScript|load)\s*\('
+                r'|new\s+XMLHttpRequest\s*\('
+                r'|\bfetch\s*\('
+                r'|new\s+ActiveXObject\s*\('
+                r'|\baxios(?:\.\w+)?\s*\('
+                r'|setRequestHeader\s*\(\s*["\']X-Requested-With["\'])',
+                re.IGNORECASE
+            ),
+            
+            # Dynamic Resource Generation
+            'dynamic_js': re.compile(
+                r'(document\.createElement\s*\([\'"]script[\'"]\)|eval\s*\(|new\s+Function\s*\(|document\.write\s*\([^)]*<script)',
+                re.IGNORECASE
+            ),
+            'dynamic_css': re.compile(
+                r'(document\.createElement\s*\([\'"]style[\'"]\)|document\.createElement\s*\([\'"]link[\'"]\)|document\.write\s*\([^)]*<style)',
+                re.IGNORECASE
+            )
         }
 
     def count_lines_and_analyze(self, filepath):
