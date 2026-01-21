@@ -99,13 +99,21 @@ class Reporter:
         if not df_dir_stats.empty:
             df_dir_stats = df_dir_stats.sort_values(by=['Depth', 'Directory'])
 
-        # 3. File Inventory Data (Reordered)
-        cols_order = ['Directory', 'Filename', 'Extension', 'Line_Count', 'Size_KB', 'Full_Path']
-        df_details = df_inv[cols_order] if not df_inv.empty else pd.DataFrame(columns=cols_order)
-        # Rename 'Directory' to 'File Path' as requested implies path context, 
-        # but 'Full_Path' is absolute. Let's keep 'Directory' as relative path and 'Full_Path' as absolute.
-        # User asked for 'File Path' first. Let's use the Directory column but rename it for clarity.
-        df_details.rename(columns={'Directory': 'Folder Path'}, inplace=True)
+        # 3. File Inventory Data (Basic Metadata Only)
+        cols_basic = ['Directory', 'Filename', 'Extension', 'Line_Count', 'Size_KB', 'Full_Path']
+        df_details = df_inv[cols_basic] if not df_inv.empty else pd.DataFrame(columns=cols_basic)
+        
+        # 4. Complexity Metrics Data (Dedicated Tab)
+        cols_complexity = [
+            'Directory', 'Filename',
+            'Inline_CSS_Count', 'Internal_CSS_Count', 
+            'Inline_JS_Count', 'Internal_JS_Count', 
+            'AJAX_Calls_Count', 'Dynamic_JS_Gen_Count', 'Dynamic_CSS_Gen_Count'
+        ]
+        df_complexity = df_inv[cols_complexity] if not df_inv.empty else pd.DataFrame(columns=cols_complexity)
+
+        # Rename Directory to Folder Path for clarity in File_Details tab
+        df_details = df_details.rename(columns={'Directory': 'Folder Path'})
 
         # --- Write to Excel ---
         print(f"Generating report at {output_file}...")
@@ -124,11 +132,15 @@ class Reporter:
 
                 # Tab 3: File_Details
                 df_details.to_excel(writer, sheet_name='File_Details', index=False)
+                
+                # Tab 4: Complexity_Metrics
+                df_complexity.to_excel(writer, sheet_name='Complexity_Metrics', index=False)
 
                 # Apply Styling
                 self._style_worksheet(writer.sheets['Summary_Dashboard'])
                 self._style_worksheet(writer.sheets['Directory_Analysis'])
                 self._style_worksheet(writer.sheets['File_Details'])
+                self._style_worksheet(writer.sheets['Complexity_Metrics'])
 
             print("Report generated successfully.")
             return output_file
