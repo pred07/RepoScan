@@ -3,7 +3,7 @@ import glob
 import os
 
 # Find the latest report
-list_of_files = glob.glob('output_complexity_v4/*.xlsx')
+list_of_files = glob.glob('output_verify_v2/*.xlsx')
 latest_file = max(list_of_files, key=os.path.getctime)
 print(f"Checking file: {latest_file}")
 
@@ -15,9 +15,11 @@ row = df[df['Filename'] == 'test_patterns.html'].iloc[0]
 
 print("--- Actual Counts ---")
 print(f"Inline CSS: {row['Inline_CSS_Count']}")
-print(f"Internal CSS: {row['Internal_CSS_Count']}")
+print(f"Internal Style Blocks: {row['Internal_Style_Blocks_Count']}")
+print(f"External Stylesheet Links: {row['External_Stylesheet_Links_Count']}")
 print(f"Inline JS: {row['Inline_JS_Count']}")
-print(f"Internal JS: {row['Internal_JS_Count']}")
+print(f"Internal Script Blocks: {row['Internal_Script_Blocks_Count']}")
+print(f"External Script Tags: {row['External_Script_Tags_Count']}")
 print(f"AJAX Calls: {row['AJAX_Calls_Count']}")
 print(f"Dynamic JS: {row['Dynamic_JS_Gen_Count']}")
 print(f"Dynamic CSS: {row['Dynamic_CSS_Gen_Count']}")
@@ -25,9 +27,11 @@ print("---------------------")
 
 expected = {
     'Inline_CSS_Count': 1,
-    'Internal_CSS_Count': 2,
+    'Internal_Style_Blocks_Count': 1,
+    'External_Stylesheet_Links_Count': 1,
     'Inline_JS_Count': 2,
-    'Internal_JS_Count': 5,
+    'Internal_Script_Blocks_Count': 4,
+    'External_Script_Tags_Count': 1,
     'AJAX_Calls_Count': 8,
     'Dynamic_JS_Gen_Count': 8,
     'Dynamic_CSS_Gen_Count': 8

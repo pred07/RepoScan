@@ -106,8 +106,8 @@ class Reporter:
         # 4. Complexity Metrics Data (Dedicated Tab)
         cols_complexity = [
             'Directory', 'Filename',
-            'Inline_CSS_Count', 'Internal_CSS_Count', 
-            'Inline_JS_Count', 'Internal_JS_Count', 
+            'Inline_CSS_Count', 'Internal_Style_Blocks_Count', 'External_Stylesheet_Links_Count',
+            'Inline_JS_Count', 'Internal_Script_Blocks_Count', 'External_Script_Tags_Count', 
             'AJAX_Calls_Count', 'Dynamic_JS_Gen_Count', 'Dynamic_CSS_Gen_Count'
         ]
         df_complexity = df_inv[cols_complexity] if not df_inv.empty else pd.DataFrame(columns=cols_complexity)

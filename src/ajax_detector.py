@@ -12,13 +12,12 @@ from typing import Optional
 # Compile regex patterns once for performance
 AJAX_PATTERNS = {
     'xmlhttprequest': re.compile(r'new\s+XMLHttpRequest\s*\(', re.IGNORECASE),
-    'jquery_ajax': re.compile(r'\$\.ajax\s*\(|jQuery\.ajax\s*\(', re.IGNORECASE),
-    'jquery_get': re.compile(r'\$\.get\s*\(|jQuery\.get\s*\(', re.IGNORECASE),
-    'jquery_post': re.compile(r'\$\.post\s*\(|jQuery\.post\s*\(', re.IGNORECASE),
-    'jquery_getjson': re.compile(r'\$\.getJSON\s*\(|jQuery\.getJSON\s*\(', re.IGNORECASE),
-    'jquery_load': re.compile(r'\$\.load\s*\(|jQuery\.load\s*\(', re.IGNORECASE),
+    'jquery_ajax': re.compile(r'[A-Za-z_$]\w*\s*\.\s*(?:ajax|get|post|getJSON|getScript|load|request)\s*\(', re.IGNORECASE),
     'fetch_api': re.compile(r'\bfetch\s*\(|window\.fetch\s*\(', re.IGNORECASE),
-    'axios': re.compile(r'\baxios\s*\(|axios\.(get|post|put|delete|patch|request)\s*\(', re.IGNORECASE),
+    'axios': re.compile(r'\baxios(?:\.\w+)?\s*\(', re.IGNORECASE),
+    'xhr_state': re.compile(r'\bonreadystatechange\s*=|' r'\.send\s*\(', re.IGNORECASE),
+    'websocket': re.compile(r'new\s+WebSocket\s*\(', re.IGNORECASE),
+    'eventsource': re.compile(r'new\s+EventSource\s*\(', re.IGNORECASE),
 }
 
 # Server-side dependency patterns
@@ -76,17 +75,32 @@ def detect_ajax_patterns(snippet) -> bool:
     
     code = snippet.full_code
     
-    # Check if AJAX pattern exists
-    pattern_name = get_ajax_pattern_name(code)
+    total_ajax = 0
+    first_pattern = ""
     
-    if pattern_name:
+    for name, pattern in AJAX_PATTERNS.items():
+        matches = pattern.findall(code)
+        if matches:
+            if not first_pattern:
+                first_pattern = name
+            total_ajax += len(matches)
+            
+    if total_ajax > 0:
         snippet.ajax_detected = True
-        snippet.ajax_pattern = pattern_name
-        snippet.endpoint_url = extract_endpoint_url(code, pattern_name)
-        snippet.has_server_deps = check_server_dependencies(code)
+        snippet.ajax_pattern = first_pattern
+        snippet.ajax_count = total_ajax
+        snippet.endpoint_url = extract_endpoint_url(code, first_pattern)
         snippet.is_inline_ajax = is_inline_ajax(snippet.file_path)
+        
+        # Check for server dependencies (e.g. <%= %>, Razor @Model)
+        snippet.has_server_deps = False
+        for dep_pattern in SERVER_PATTERNS:
+            if dep_pattern.search(code):
+                snippet.has_server_deps = True
+                break
+        
         return True
-    
+        
     return False
 
 

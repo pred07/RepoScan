@@ -20,29 +20,33 @@ class Scanner:
         
         # Compile Regex Patterns - Matching main utility's comprehensive detection
         self.patterns = {
-            # 1. Inline & Internal CSS
+            # 1. CSS Patterns
             'inline_css': re.compile(r'style\s*=\s*["\'][^"\']*["\']', re.IGNORECASE),
-            'internal_css': re.compile(
-                r'(<style\b[^>]*>[\s\S]*?</style>|<link\b[^>]*rel\s*=\s*["\']stylesheet["\'][^>]*>)',
-                re.IGNORECASE | re.DOTALL
+            'internal_style_blocks': re.compile(r'<style\b[^>]*>[\s\S]*?</style>', re.IGNORECASE),
+            'external_stylesheet_links': re.compile(
+                r'<link\b[^>]*rel\s*=\s*["\']stylesheet["\'][^>]*>', re.IGNORECASE
             ),
 
-            # 2. Inline & Internal JS
+            # 2. JS Patterns
             'inline_js': re.compile(
                 r'(\bon\w+\s*=\s*["\'][^"\']*["\']|href=["\']\s*javascript:)', 
                 re.IGNORECASE
             ),
-            'internal_js': re.compile(
-                r'(<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?</script>|<script\b[^>]*src\s*=\s*["\'][^"\']+["\'])',
-                re.IGNORECASE | re.DOTALL
+            'internal_script_blocks': re.compile(
+                r'<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?</script>', re.IGNORECASE
+            ),
+            'external_script_tags': re.compile(
+                r'<script\b[^>]*src\s*=\s*["\'][^"\']+["\'][^>]*>', re.IGNORECASE
             ),
 
             # 3. AJAX / Network Calls
             'ajax_call': re.compile(
                 r'(\bfetch\s*\(|'
                 r'new\s+XMLHttpRequest\s*\(|'
-                r'[A-Za-z_$]\w*\s*\.\s*(?:ajax|get|post|getJSON|getScript|load|request)\s*\(|'  # Broad Method Call
+                r'[A-Za-z_$]\w*\s*\.\s*(?:ajax|get|post|getJSON|getScript|load|request)\s*\(|'
                 r'\.open\s*\(\s*["\'](?:GET|POST|PUT|DELETE|PATCH)["\']|'
+                r'\bonreadystatechange\s*=|'
+                r'\.send\s*\(|'
                 r'\baxios(?:\.\w+)?\s*\(|'
                 r'new\s+WebSocket\s*\(|'
                 r'new\s+EventSource\s*\()',
@@ -53,7 +57,7 @@ class Scanner:
             'dynamic_js': re.compile(
                 r'(\.src\s*=\s*["\'][^"\']+\.js["\']|'
                 r'document\.createElement\s*\(\s*["\']script["\']\s*\)|'
-                r'\.appendChild\s*\(|'  # Broad DOM insertion
+                r'\.appendChild\s*\(|'
                 r'\.insertBefore\s*\(|'
                 r'eval\s*\(|'
                 r'new\s+Function\s*\(|'
@@ -62,7 +66,10 @@ class Scanner:
                 r'import\s*\(|'
                 r'System\.import\s*\(|'
                 r'require\s*\(|'
-                r'innerHTML\s*=)',
+                r'innerHTML\s*=|'
+                r'outerHTML\s*=|'
+                r'insertAdjacentHTML\s*\(|'
+                r'document\.write\s*\()',
                 re.IGNORECASE
             ),
             'dynamic_css': re.compile(
@@ -86,8 +93,8 @@ class Scanner:
         """Counts lines and scans for complexity metrics."""
         metrics = {
             'lines': 0,
-            'inline_css': 0, 'internal_css': 0,
-            'inline_js': 0, 'internal_js': 0,
+            'inline_css': 0, 'internal_style_blocks': 0, 'external_stylesheet_links': 0,
+            'inline_js': 0, 'internal_script_blocks': 0, 'external_script_tags': 0,
             'ajax_calls': 0, 'dynamic_js': 0, 'dynamic_css': 0
         }
         
@@ -106,9 +113,11 @@ class Scanner:
                 if ext in web_exts:
                     # Run Regex Analysis
                     metrics['inline_css'] = len(self.patterns['inline_css'].findall(content))
-                    metrics['internal_css'] = len(self.patterns['internal_css'].findall(content))
+                    metrics['internal_style_blocks'] = len(self.patterns['internal_style_blocks'].findall(content))
+                    metrics['external_stylesheet_links'] = len(self.patterns['external_stylesheet_links'].findall(content))
                     metrics['inline_js'] = len(self.patterns['inline_js'].findall(content))
-                    metrics['internal_js'] = len(self.patterns['internal_js'].findall(content))
+                    metrics['internal_script_blocks'] = len(self.patterns['internal_script_blocks'].findall(content))
+                    metrics['external_script_tags'] = len(self.patterns['external_script_tags'].findall(content))
                     metrics['ajax_calls'] = len(self.patterns['ajax_call'].findall(content))
                     metrics['dynamic_js'] = len(self.patterns['dynamic_js'].findall(content))
                     metrics['dynamic_css'] = len(self.patterns['dynamic_css'].findall(content))
@@ -180,9 +189,11 @@ class Scanner:
                 'Size_KB': round(item['size_kb'], 2),
                 'Line_Count': item['metrics']['lines'],
                 'Inline_CSS_Count': item['metrics']['inline_css'],
-                'Internal_CSS_Count': item['metrics']['internal_css'],
+                'Internal_Style_Blocks_Count': item['metrics']['internal_style_blocks'],
+                'External_Stylesheet_Links_Count': item['metrics']['external_stylesheet_links'],
                 'Inline_JS_Count': item['metrics']['inline_js'],
-                'Internal_JS_Count': item['metrics']['internal_js'],
+                'Internal_Script_Blocks_Count': item['metrics']['internal_script_blocks'],
+                'External_Script_Tags_Count': item['metrics']['external_script_tags'],
                 'AJAX_Calls_Count': item['metrics']['ajax_calls'],
                 'Dynamic_JS_Gen_Count': item['metrics']['dynamic_js'],
                 'Dynamic_CSS_Gen_Count': item['metrics']['dynamic_css'],

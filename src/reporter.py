@@ -108,12 +108,14 @@ class Reporter:
         ext_count = len([f for f in self.findings if f.category == 'External'])
         total_count = len(self.findings)
         
-        # AJAX Stats
-        ajax_count = len([f for f in self.findings if f.ajax_detected])
-        inline_ajax = len([f for f in self.findings if f.ajax_detected and f.is_inline_ajax])
-        external_ajax = len([f for f in self.findings if f.ajax_detected and not f.is_inline_ajax])
-        server_deps = len([f for f in self.findings if f.ajax_detected and f.has_server_deps])
-        clean_ajax = len([f for f in self.findings if f.ajax_detected and f.is_inline_ajax and not f.has_server_deps])
+        # AJAX & Dynamic Stats (Literal Counts)
+        ajax_count = sum([getattr(f, 'ajax_count', 0) for f in self.findings])
+        inline_ajax = sum([getattr(f, 'ajax_count', 0) for f in self.findings if f.ajax_detected and f.is_inline_ajax])
+        external_ajax = sum([getattr(f, 'ajax_count', 0) for f in self.findings if f.ajax_detected and not f.is_inline_ajax])
+        server_deps = sum([getattr(f, 'ajax_count', 0) for f in self.findings if f.ajax_detected and f.has_server_deps])
+        clean_ajax = sum([getattr(f, 'ajax_count', 0) for f in self.findings if f.ajax_detected and f.is_inline_ajax and not f.has_server_deps])
+        
+        dynamic_count = sum([getattr(f, 'dynamic_count', 0) for f in self.findings])
 
         # Table Header
         ws.cell(row=6, column=1, value="Detection Summary").font = Font(bold=True, size=14)
@@ -139,6 +141,8 @@ class Reporter:
             ("  - External AJAX", external_ajax),
             ("  - With Server Dependencies", server_deps),
             ("  - Clean/Extractable", clean_ajax),
+            ("", ""),
+            ("Total Dynamic Code Sinks Found", dynamic_count),
         ]
 
         for i, (cat, count) in enumerate(data):
@@ -154,8 +158,8 @@ class Reporter:
         ws.column_dimensions['B'].width = 15
 
     def _create_js_sheet(self):
-        # Columns: File Path, File Name, Extracted File, Type, Start Line, End Line, Code Snippet, AJAX Detected, Full Code
-        headers = ["File Path", "File Name", "Extracted File", "Type", "Start Line", "End Line", "Code Snippet", "AJAX Detected", "Full Code"]
+        # Columns: File Path, File Name, Extracted File, Type, Start Line, End Line, Code Snippet, AJAX Detected, Dynamic Code?, Full Code
+        headers = ["File Path", "File Name", "Extracted File", "Type", "Start Line", "End Line", "Code Snippet", "AJAX Detected", "Dynamic Code?", "Full Code"]
         data = []
         
         js_findings = [f for f in self.findings if f.category == 'JS']
@@ -169,6 +173,7 @@ class Reporter:
                 f.end_line,
                 f.snippet,
                 "Yes" if f.ajax_detected else "No",
+                "Yes" if getattr(f, 'dynamic_code_detected', False) else "No",
                 f.full_code
             ])
         self._create_sheet("Inline JavaScript", headers, data)

@@ -1,4 +1,5 @@
 import re
+import os
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
 import bs4
@@ -13,12 +14,16 @@ class CodeSnippet:
         self.code_type = code_type # e.g., 'Script Block', 'onclick', 'External Script'
         self.full_code = full_code if full_code else snippet
         self.ajax_detected = ajax_detected
+        self.ajax_count = 0
+        self.dynamic_code_detected = False
+        self.dynamic_count = 0
         self.source_type = source_type # 'INLINE', 'LOCAL', 'REMOTE'
         # AJAX-specific fields
         self.ajax_pattern = ""
         self.endpoint_url = ""
         self.has_server_deps = False
         self.is_inline_ajax = False
+        self.dynamic_pattern = ""
         self.bundled_file = ""  # Populated by Reporter
 
 
@@ -39,7 +44,11 @@ class Parser:
             'onerror', 'onabort', 'onplay', 'onpause', 'onvolumechange', 'ontimeupdate',
             'ondrag', 'ondragstart', 'ondragend', 'ondrop'
         }
-        self.ajax_keywords = ['XMLHttpRequest', 'fetch', '$.ajax', 'axios', 'hxr']
+        self.dynamic_patterns = {
+            'dom_sink': re.compile(r'\.(innerHTML|outerHTML|insertAdjacentHTML|write|writeln)\s*=', re.IGNORECASE),
+            'js_sink': re.compile(r'\b(eval|new\s+Function|setTimeout|setInterval)\s*\(', re.IGNORECASE),
+            'dynamic_load': re.compile(r'\.(src|href)\s*=\s*|document\.createElement\s*\(\s*["\'](script|style|link)["\']\s*\)', re.IGNORECASE)
+        }
 
     def parse(self, file_path: str, content: str) -> List[CodeSnippet]:
         all_findings = []
@@ -47,16 +56,31 @@ class Parser:
         # 1. Regex approach
         all_findings.extend(self._scan_regex(file_path, content))
         
-        # 2. DOM Parsing
-        # Prefer html.parser as it reliably supports sourceline in recent BS4 versions.
-        # lxml often returns None for sourceline unless configured specifically with XML.
-        try:
-            soup = BeautifulSoup(content, 'html.parser')
-        except:
-            # Fallback for really broken HTML
-            soup = BeautifulSoup(content, 'lxml')
-            
-        all_findings.extend(self._scan_dom(file_path, soup, content))
+        # 1.5 Standalone JS File handling
+        _, ext = os.path.splitext(file_path)
+        if ext.lower() == '.js':
+            all_findings.append(CodeSnippet(
+                file_path, 
+                1, 
+                len(content.splitlines()), 
+                'JS', 
+                content.strip()[:200], 
+                'standalone_js', 
+                full_code=content.strip(), 
+                source_type='LOCAL'
+            ))
+        
+        # 2. DOM Parsing (for HTML/ASPX files)
+        if ext.lower() != '.js':
+            # Prefer html.parser as it reliably supports sourceline in recent BS4 versions.
+            # lxml often returns None for sourceline unless configured specifically with XML.
+            try:
+                soup = BeautifulSoup(content, 'html.parser')
+            except:
+                # Fallback for really broken HTML
+                soup = BeautifulSoup(content, 'lxml')
+                
+            all_findings.extend(self._scan_dom(file_path, soup, content))
         
         # 3. Deduplicate
         unique_findings = []
@@ -72,11 +96,12 @@ class Parser:
                 seen.add(key)
                 unique_findings.append(finding)
         
-        # 4. AJAX Detection (for JavaScript snippets only)
+        # 4. Enrichment (AJAX and Dynamic Code Detection)
         from . import ajax_detector
         for finding in unique_findings:
             if finding.category == 'JS':
                 ajax_detector.detect_ajax_patterns(finding)
+                self._detect_dynamic(finding)
                 
         return unique_findings
 
@@ -117,13 +142,10 @@ class Parser:
                     code = script.string if script.string else "".join([str(c) for c in script.contents])
                     full_code = code.strip()
                     snippet = full_code[:200]
-                    ajax = self._detect_ajax(full_code)
-                    
-                    # Calculate end line
                     line_count = full_code.count('\n')
                     end_line = line_num + line_count
                     
-                    findings.append(CodeSnippet(file_path, line_num, end_line, 'JS', snippet, 'scriptblock', full_code=full_code, ajax_detected=ajax, source_type='INLINE'))
+                    findings.append(CodeSnippet(file_path, line_num, end_line, 'JS', snippet, 'scriptblock', full_code=full_code, source_type='INLINE'))
 
         # 2. Event Handlers
         for tag in soup.find_all(True):
@@ -140,8 +162,7 @@ class Parser:
                     end_line = line_num + line_count
                     
                     snippet = f'{attr}="{full_code}"'
-                    ajax = self._detect_ajax(full_code)
-                    findings.append(CodeSnippet(file_path, line_num, end_line, 'JS', snippet, attr_lower, full_code=full_code, ajax_detected=ajax, source_type='INLINE'))
+                    findings.append(CodeSnippet(file_path, line_num, end_line, 'JS', snippet, attr_lower, full_code=full_code, source_type='INLINE'))
                 
                 if attr_lower in ['href', 'src']:
                     val = tag[attr]
@@ -209,8 +230,22 @@ class Parser:
                 
         return 0
 
-    def _detect_ajax(self, code: str) -> bool:
-        for keyword in self.ajax_keywords:
-            if keyword in code:
-                return True
+    def _detect_dynamic(self, snippet: CodeSnippet):
+        """Detects dynamic code generation patterns in a snippet."""
+        code = snippet.full_code
+        total_dynamic = 0
+        first_pattern = ""
+        
+        for name, pattern in self.dynamic_patterns.items():
+            matches = pattern.findall(code)
+            if matches:
+                if not first_pattern:
+                    first_pattern = name
+                total_dynamic += len(matches)
+        
+        if total_dynamic > 0:
+            snippet.dynamic_code_detected = True
+            snippet.dynamic_pattern = first_pattern
+            snippet.dynamic_count = total_dynamic
+            return True
         return False

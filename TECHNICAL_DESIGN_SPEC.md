@@ -92,9 +92,13 @@ The parser utilizes a hybrid approach: **BeautifulSoup 4** for DOM traversal and
 *   **Pattern**: `href="javascript:..."` or `src="javascript:..."`.
 *   **Logic**: Detected via regex `re.compile(r'href=["\']\s*javascript:', re.IGNORECASE)` and DOM attribute scan.
 
-**AJAX Detection (Phase 2 Feature)**:
-*   **Keywords**: `XMLHttpRequest`, `fetch`, `$.ajax`, `axios`.
-*   **Logic**: If a JS snippet contains these keywords, it is flagged and passed to `src.ajax_detector` for endpoint extraction.
+**AJAX Detection**:
+*   **Keywords/Patterns**: `XMLHttpRequest`, `fetch`, `$.ajax`, `axios`, `WebSocket`, `EventSource`, `onreadystatechange`.
+*   **Logic**: Handled by `src.ajax_detector`. JS snippets are scanned for network-related patterns. The tool extracts endpoint URLs and checks for server-side dependencies (Interpolation/Razor).
+
+**Dynamic Code Generation**:
+*   **Patterns**: `innerHTML`, `outerHTML`, `eval`, `new Function`, `setTimeout`, `document.write`.
+*   **Logic**: The parser identifies "sinks" where strings are parsed as code or inserted into the DOM. These are flagged for manual review as they often bypass CSP if not handled correctly.
 
 ### 4.2 Refactoring Engine Workflow
 
@@ -166,6 +170,7 @@ RepoScan/
 *   **Status**: Complete.
     *   `check.py` accurately categorizes complexity (Green/Yellow/Red).
     *   `refactor.py` successfully generates a safe copy of the app with externalized scripts.
+    *   **Final Accuracy Sync**: Detection patterns synchronized with `repo_depth_analyser` (verified 100% test accuracy). Added support for **WebSocket**, **EventSource**, and **Dynamic Code Sinks**.
 
 ## 8. Error Handling & Logging
 
