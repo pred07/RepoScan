@@ -220,4 +220,23 @@ Analyzes extracted content to determine safety:
 
 #### Safety Mechanisms (`refactoring_utility/refactor.py`)
 *   **Immutable Source**: Input directory is treated as read-only.
-*   **Metadata Filenames**: `OriginalPath_Type_LineStart-LineEnd.js` stores all context needed for restoration.
+
+---
+
+## 6. Repository Depth Analyser
+
+**Goal**: Provide a high-level "Inventory & Shape" analysis of the codebase to understand its scale and complexity before diving into code.
+
+### Usage
+```powershell
+python repo_depth_analyser/main.py <TargetDirectory> --output <OutputDirectory>
+```
+
+### Features
+*   **Noise Reduction**: Automatically excludes system directories (`.git`, `.vscode`, `node_modules`, `__pycache__`) and temporary lock files (`~$*`) to give an accurate source code count.
+*   **Structural Analysis**: Calculates directory depth and extension distribution per folder.
+*   **Reporting**: Generates a 3-tab Excel Tracker:
+    1.  **Summary_Dashboard**: High-level metrics (Total Files, Lines of Code, Extension Breakdown).
+    2.  **Directory_Analysis**: Per-folder statistics with depth and file types.
+    3.  **File_Details**: Complete inventory of every file scanned.
+
