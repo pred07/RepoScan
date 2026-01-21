@@ -11,11 +11,14 @@ class Scanner:
         self.directory_stats = collections.defaultdict(lambda: {'count': 0, 'lines': 0})
         
         # Folders to exclude (dependencies, build outputs, version control)
-        self.excluded_folders = {
-            'node_modules', 'vendor', 'packages', '.git', '.svn', '.hg',
-            'bin', 'obj', 'dist', 'build', 'out', 'target',
-            '__pycache__', '.pytest_cache', '.venv', 'venv', 'env'
-        }
+        # Folders to exclude (dependencies, build outputs, version control)
+        # User requested to include EVERYTHING.
+        self.excluded_folders = set()
+        # self.excluded_folders = {
+        #     'node_modules', 'vendor', 'packages', '.git', '.svn', '.hg',
+        #     'bin', 'obj', 'dist', 'build', 'out', 'target',
+        #     '__pycache__', '.pytest_cache', '.venv', 'venv', 'env'
+        # }
         
         # Compile Regex Patterns - Matching main utility's comprehensive detection
         self.patterns = {
