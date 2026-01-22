@@ -56,6 +56,11 @@ class Scanner:
                 r'new\s+ActiveXObject\s*\(|'    # Legacy IE
                 r'\bio\s*\(|'                   # Socket.io
                 r'HubConnectionBuilder|'        # SignalR
+                r'\bSys\.Net\.WebRequest\s*\(|' # Microsoft AJAX Library (Legacy)
+                r'\bPageMethods\.\w+\s*\(|'     # ASP.NET WebForms RPC
+                r'\b__doPostBack\s*\(|'         # ASP.NET Postback
+                r'\bSys\.WebForms\.PageRequestManager|' # UpdatePanel Manager
+                r'\bdata-ajax(?:-\w+)?\s*=|'    # Unobtrusive AJAX Attributes
                 r'\$http\b)',                   # Angular 1.x / Vue Resource
                 re.IGNORECASE
             ),
@@ -188,6 +193,27 @@ class Scanner:
                             category = "Utility"
                             is_logical_request = False
                             difficulty = "Easy"
+                        elif 'sys.net.webrequest' in lower_match:
+                             capability = "Data Exchange (Legacy)"
+                             category = "Request"
+                             difficulty = "Hard"
+                        elif 'pagemethods' in lower_match:
+                             capability = "RPC (Code-Behind)"
+                             category = "Request"
+                             difficulty = "Hard"
+                        elif '__dopostback' in lower_match:
+                             capability = "Partial Postback"
+                             category = "Request"
+                             difficulty = "Medium"
+                        elif 'data-ajax' in lower_match:
+                             capability = "Declarative AJAX"
+                             category = "Request"
+                             difficulty = "Easy"
+                        elif 'sys.webforms' in lower_match:
+                             capability = "UpdatePanel Config"
+                             category = "Config"
+                             is_logical_request = False
+                             difficulty = "Hard"
                         elif 'new xmlhttprequest' in lower_match or '.open' in lower_match:
                              capability = "XHR Construct"
                              category = "Construct"
