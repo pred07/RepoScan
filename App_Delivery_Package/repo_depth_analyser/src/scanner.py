@@ -50,7 +50,12 @@ class Scanner:
                 r'\baxios(?:\.\w+)?\s*\(|'
                 r'new\s+WebSocket\s*\(|'
                 r'new\s+EventSource\s*\(|'
-                r'\bajax\s*:\s*function)',  # Object literal AJAX method definitions
+                r'\bajax\s*:\s*function|'  # Object literal AJAX method definitions
+                r'navigator\.sendBeacon\s*\(|'  # Analytics/Tracking
+                r'new\s+ActiveXObject\s*\(|'    # Legacy IE
+                r'\bio\s*\(|'                   # Socket.io
+                r'HubConnectionBuilder|'        # SignalR
+                r'\$http\b)',                   # Angular 1.x / Vue Resource
                 re.IGNORECASE
             ),
 
