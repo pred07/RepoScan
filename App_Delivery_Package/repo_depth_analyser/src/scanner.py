@@ -43,7 +43,8 @@ class Scanner:
             'ajax_call': re.compile(
                 r'(\bfetch\s*\(|'
                 r'new\s+XMLHttpRequest\s*\(|'
-                r'(?:\$|jQuery|axios|superagent|http)\s*\.\s*(?:ajax|get|post|getJSON|getScript|load|request)\s*\(|'
+                r'(?:\$|jQuery|axios|superagent|http)\s*\.\s*(?:ajax|get|post|getJSON|getScript|load|request|ajaxSetup|ajaxPrefilter|ajaxTransport|param|parseJSON)\s*\(|'
+                r'\.(?:load|ajaxStart|ajaxSend|ajaxSuccess|ajaxError|ajaxComplete|ajaxStop|serialize|serializeArray)\s*\(|'
                 r'\.open\s*\(\s*["\'](?:GET|POST|PUT|DELETE|PATCH)["\']|'
                 r'\bonreadystatechange\s*=|'
                 r'\.send\s*\(|'
@@ -149,20 +150,28 @@ class Scanner:
                         
                         if 'sendbeacon' in lower_match:
                             capability = "Telemetry"
-                            csp = "connect-src"
                             difficulty = "Easy"
                         elif 'getscript' in lower_match or '.js' in lower_match:
                             capability = "Script Loading (Dynamic)"
-                            csp = "script-src"
                             difficulty = "Hard"
                         elif '.css' in lower_match:
                             capability = "CSS Loading"
-                            csp = "style-src"
                             difficulty = "Medium"
-                        elif '.html' in lower_match or 'load' in lower_match:
+                        elif '.html' in lower_match:
                             capability = "UI Injection"
-                            csp = "script-src"
                             difficulty = "Medium"
+                        elif 'load' in lower_match and 'payload' not in lower_match: # Filter false positive variables
+                            capability = "UI Injection (Likely)"
+                            difficulty = "Medium"
+                        elif any(x in lower_match for x in ['ajaxsetup', 'ajaxprefilter', 'ajaxtransport']):
+                            capability = "AJAX Configuration"
+                            difficulty = "Easy"
+                        elif any(x in lower_match for x in ['ajaxstart', 'ajaxsend', 'ajaxsuccess', 'ajaxerror', 'ajaxcomplete', 'ajaxstop']):
+                            capability = "Global Event Handler"
+                            difficulty = "Hard (Refactoring Risk)"
+                        elif any(x in lower_match for x in ['serialize', 'param', 'parsejson']):
+                            capability = "Form/Data Utility"
+                            difficulty = "Easy"
                             
                         metrics['ajax_details'].append({
                             'Line': line_num,
