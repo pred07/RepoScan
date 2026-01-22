@@ -43,10 +43,35 @@ The tool generates an Excel file: `Application_Depth_Tracker_YYYYMMDD_HHMMSS.xls
 
 ### Report Tabs
 
-1. **Summary_Dashboard**: Overview metrics and global extension breakdown
+1. **Summary_Dashboard**: 
+   - **Basic Metrics**: Total files, code lines, and size
+   - **Complexity Metrics Summary**: Totals for all detected patterns (CSS, JS, AJAX, Dynamic code)
+   - **Global Extension Breakdown**: File count by extension
 2. **Directory_Analysis**: Statistics grouped by directory with depth information
 3. **File_Details**: Basic file metadata (path, name, extension, lines, size)
-4. **Complexity_Metrics**: Dedicated tab with all complexity analysis data
+4. **Complexity_Metrics**: Detailed per-file complexity analysis with full paths
+
+### Summary Dashboard Highlights
+
+The **Summary_Dashboard** tab provides an at-a-glance overview with totals for:
+
+**CSS Patterns:**
+- Inline CSS (style="...") 
+- Internal Style Blocks (<style>)
+- External Stylesheets (<link>)
+
+**JavaScript Patterns:**
+- Inline JS (event handlers)
+- Internal Script Blocks (<script>)
+- External Script Tags (src="...")
+
+**AJAX & Network Calls:**
+- Total AJAX Calls Detected
+- Files with AJAX
+
+**Dynamic Code Generation:**
+- Dynamic JS (eval, innerHTML, etc.)
+- Dynamic CSS (style manipulation)
 
 ### Complexity Metrics
 
@@ -60,6 +85,7 @@ The **Complexity_Metrics** tab provides granular code complexity insights with *
   - jQuery: `$.ajax()`, `$.get()`, `$.post()`, `$.getJSON()`, `$.getScript()`, `$.load()`
   - Native: `XMLHttpRequest`, `fetch()`, `ActiveXObject` (IE legacy)
   - Modern: `axios()`, `axios.get/post/put/delete/patch()`
+  - Object Literals: `ajax: function()` (jQuery plugins, API wrappers)
   - Headers: `setRequestHeader('X-Requested-With')`
 - **Dynamic_JS_Gen_Count**: Dynamic script creation (`createElement('script')`, `eval()`, `new Function()`)
 - **Dynamic_CSS_Gen_Count**: Dynamic style creation (`createElement('style')`, `createElement('link')`)

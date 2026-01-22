@@ -84,12 +84,72 @@ class Reporter:
         else:
             ext_counts = pd.DataFrame(columns=['Extension', 'File Count'])
 
-        # Create Summary DataFrame (Hybrid layout)
+        # Calculate Complexity Metrics Totals
+        if not df_inv.empty:
+            total_inline_css = df_inv['Inline_CSS_Count'].sum()
+            total_internal_style = df_inv['Internal_Style_Blocks_Count'].sum()
+            total_external_css = df_inv['External_Stylesheet_Links_Count'].sum()
+            total_inline_js = df_inv['Inline_JS_Count'].sum()
+            total_internal_script = df_inv['Internal_Script_Blocks_Count'].sum()
+            total_external_js = df_inv['External_Script_Tags_Count'].sum()
+            total_ajax = df_inv['AJAX_Calls_Count'].sum()
+            files_with_ajax = len(df_inv[df_inv['Has_Ajax_Calls'] == 'Yes'])
+            total_dynamic_js = df_inv['Dynamic_JS_Gen_Count'].sum()
+            total_dynamic_css = df_inv['Dynamic_CSS_Gen_Count'].sum()
+        else:
+            total_inline_css = total_internal_style = total_external_css = 0
+            total_inline_js = total_internal_script = total_external_js = 0
+            total_ajax = files_with_ajax = total_dynamic_js = total_dynamic_css = 0
+
+        # Create Summary DataFrame with Basic Metrics
         summary_data = {
             'Metric': ['Total Files', 'Total Code Lines', 'Total Size (MB)'],
             'Value': [total_files, total_lines, round(total_size_mb, 2)]
         }
         df_summary_main = pd.DataFrame(summary_data)
+        
+        # Create Complexity Metrics Summary
+        complexity_summary_data = {
+            'Category': [
+                '--- CSS Patterns ---',
+                'Inline CSS (style="...")',
+                'Internal Style Blocks (<style>)',
+                'External Stylesheets (<link>)',
+                '',
+                '--- JavaScript Patterns ---',
+                'Inline JS (event handlers)',
+                'Internal Script Blocks (<script>)',
+                'External Script Tags (src="...")',
+                '',
+                '--- AJAX & Network Calls ---',
+                'Total AJAX Calls Detected',
+                'Files with AJAX',
+                '',
+                '--- Dynamic Code Generation ---',
+                'Dynamic JS (eval, innerHTML, etc.)',
+                'Dynamic CSS (style manipulation)'
+            ],
+            'Count': [
+                '',
+                total_inline_css,
+                total_internal_style,
+                total_external_css,
+                '',
+                '',
+                total_inline_js,
+                total_internal_script,
+                total_external_js,
+                '',
+                '',
+                total_ajax,
+                files_with_ajax,
+                '',
+                '',
+                total_dynamic_js,
+                total_dynamic_css
+            ]
+        }
+        df_complexity_summary = pd.DataFrame(complexity_summary_data)
 
         # 2. Directory Analysis Data
         dir_rows = []
@@ -132,8 +192,14 @@ class Reporter:
                 # Tab 1: Summary_Dashboard
                 # Write Summary Metrics
                 df_summary_main.to_excel(writer, sheet_name='Summary_Dashboard', startrow=1, startcol=1, index=False)
+                
+                # Write Complexity Metrics Summary
+                start_row_complexity = len(df_summary_main) + 4
+                writer.book['Summary_Dashboard'].cell(row=start_row_complexity, column=2, value="Complexity Metrics Summary").font = Font(bold=True, size=12)
+                df_complexity_summary.to_excel(writer, sheet_name='Summary_Dashboard', startrow=start_row_complexity, startcol=1, index=False)
+                
                 # Write Extension Breakdown below
-                start_row_ext = len(df_summary_main) + 4
+                start_row_ext = start_row_complexity + len(df_complexity_summary) + 3
                 writer.book['Summary_Dashboard'].cell(row=start_row_ext, column=2, value="Global Extension Breakdown").font = Font(bold=True)
                 ext_counts.to_excel(writer, sheet_name='Summary_Dashboard', startrow=start_row_ext, startcol=1, index=False)
                 
