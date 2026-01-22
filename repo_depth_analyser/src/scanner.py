@@ -49,7 +49,8 @@ class Scanner:
                 r'\.send\s*\(|'
                 r'\baxios(?:\.\w+)?\s*\(|'
                 r'new\s+WebSocket\s*\(|'
-                r'new\s+EventSource\s*\()',
+                r'new\s+EventSource\s*\(|'
+                r'\bajax\s*:\s*function)',  # Object literal AJAX method definitions
                 re.IGNORECASE
             ),
 
@@ -105,9 +106,16 @@ class Scanner:
         web_exts = {'.html', '.htm', '.aspx', '.ascx', '.cshtml', '.master', '.php', '.jsp', '.js', '.ts', '.vue', '.jsx', '.tsx'}
         
         try:
+            # Skip very large files (> 10MB) to prevent memory issues
+            file_size = os.path.getsize(filepath)
+            if file_size > 10 * 1024 * 1024:  # 10MB limit
+                with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                    metrics['lines'] = sum(1 for _ in f)
+                return metrics
+            
             with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-                metrics['lines'] = len(content.splitlines())
+                metrics['lines'] = content.count('\n') + 1  # Faster than splitlines()
                 
                 # Only analyze web-related files for Client-Side patterns
                 if ext in web_exts:
@@ -123,6 +131,9 @@ class Scanner:
                     metrics['dynamic_js'] = len(self.patterns['dynamic_js'].findall(content))
                     metrics['dynamic_css'] = len(self.patterns['dynamic_css'].findall(content))
                 
+        except (UnicodeDecodeError, PermissionError) as e:
+            # Silently skip files with encoding or permission issues
+            pass
         except Exception as e:
             print(f"Error reading {filepath}: {e}")
             

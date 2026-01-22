@@ -36,19 +36,29 @@ class Reporter:
             cell.alignment = Alignment(horizontal="center", vertical="center")
             cell.border = thin_border
 
-        # Auto-adjust column widths
+        # Auto-adjust column widths (optimized for performance)
         for col in ws.columns:
             max_length = 0
-            column = col[0].column_letter # Get the column name
-            for cell in col:
+            column = col[0].column_letter
+            column_name = col[0].value
+            
+            # Sample only first 100 rows for width calculation (performance optimization)
+            sample_size = min(100, len(col))
+            for cell in list(col)[:sample_size]:
                 try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
+                    cell_len = len(str(cell.value))
+                    if cell_len > max_length:
+                        max_length = cell_len
                 except:
                     pass
+            
             adjusted_width = (max_length + 2) * 1.05
-            if adjusted_width > 50: adjusted_width = 50 # Cap width
-            ws.column_dimensions[column].width = adjusted_width
+            
+            # Special handling for Full_Path column - allow wider width
+            if column_name == 'Full_Path':
+                ws.column_dimensions[column].width = min(adjusted_width, 100)
+            else:
+                ws.column_dimensions[column].width = min(adjusted_width, 50)
 
         # Add AutoFilter
         ws.auto_filter.ref = ws.dimensions
