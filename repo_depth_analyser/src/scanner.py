@@ -43,7 +43,7 @@ class Scanner:
             'ajax_call': re.compile(
                 r'(\bfetch\s*\(|'
                 r'new\s+XMLHttpRequest\s*\(|'
-                r'[A-Za-z_$]\w*\s*\.\s*(?:ajax|get|post|getJSON|getScript|load|request)\s*\(|'
+                r'(?:\$|jQuery|axios|superagent|http)\s*\.\s*(?:ajax|get|post|getJSON|getScript|load|request)\s*\(|'
                 r'\.open\s*\(\s*["\'](?:GET|POST|PUT|DELETE|PATCH)["\']|'
                 r'\bonreadystatechange\s*=|'
                 r'\.send\s*\(|'
@@ -95,7 +95,7 @@ class Scanner:
             'lines': 0,
             'inline_css': 0, 'internal_style_blocks': 0, 'external_stylesheet_links': 0,
             'inline_js': 0, 'internal_script_blocks': 0, 'external_script_tags': 0,
-            'ajax_calls': 0, 'dynamic_js': 0, 'dynamic_css': 0
+            'ajax_calls': 0, 'has_ajax_calls': 'No', 'dynamic_js': 0, 'dynamic_css': 0
         }
         
         _, ext = os.path.splitext(filepath)
@@ -119,6 +119,7 @@ class Scanner:
                     metrics['internal_script_blocks'] = len(self.patterns['internal_script_blocks'].findall(content))
                     metrics['external_script_tags'] = len(self.patterns['external_script_tags'].findall(content))
                     metrics['ajax_calls'] = len(self.patterns['ajax_call'].findall(content))
+                    metrics['has_ajax_calls'] = "Yes" if metrics['ajax_calls'] > 0 else "No"
                     metrics['dynamic_js'] = len(self.patterns['dynamic_js'].findall(content))
                     metrics['dynamic_css'] = len(self.patterns['dynamic_css'].findall(content))
                 
@@ -195,6 +196,7 @@ class Scanner:
                 'Internal_Script_Blocks_Count': item['metrics']['internal_script_blocks'],
                 'External_Script_Tags_Count': item['metrics']['external_script_tags'],
                 'AJAX_Calls_Count': item['metrics']['ajax_calls'],
+                'Has_Ajax_Calls': item['metrics']['has_ajax_calls'],
                 'Dynamic_JS_Gen_Count': item['metrics']['dynamic_js'],
                 'Dynamic_CSS_Gen_Count': item['metrics']['dynamic_css'],
                 'Full_Path': item['file_path']
