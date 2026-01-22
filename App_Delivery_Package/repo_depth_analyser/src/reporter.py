@@ -190,18 +190,21 @@ class Reporter:
         try:
             with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
                 # Tab 1: Summary_Dashboard
-                # Write Summary Metrics
-                df_summary_main.to_excel(writer, sheet_name='Summary_Dashboard', startrow=1, startcol=1, index=False)
+                # Write Summary Metrics starting from row 0
+                df_summary_main.to_excel(writer, sheet_name='Summary_Dashboard', startrow=0, startcol=0, index=False)
                 
                 # Write Complexity Metrics Summary
-                start_row_complexity = len(df_summary_main) + 4
-                writer.book['Summary_Dashboard'].cell(row=start_row_complexity, column=2, value="Complexity Metrics Summary").font = Font(bold=True, size=12)
-                df_complexity_summary.to_excel(writer, sheet_name='Summary_Dashboard', startrow=start_row_complexity, startcol=1, index=False)
+                start_row_complexity = len(df_summary_main) + 3
+                ws = writer.book['Summary_Dashboard']
+                ws.cell(row=start_row_complexity, column=1, value="Complexity Metrics Summary").font = Font(bold=True, size=12, color="FFFFFF")
+                ws.cell(row=start_row_complexity, column=1).fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+                df_complexity_summary.to_excel(writer, sheet_name='Summary_Dashboard', startrow=start_row_complexity, startcol=0, index=False)
                 
                 # Write Extension Breakdown below
                 start_row_ext = start_row_complexity + len(df_complexity_summary) + 3
-                writer.book['Summary_Dashboard'].cell(row=start_row_ext, column=2, value="Global Extension Breakdown").font = Font(bold=True)
-                ext_counts.to_excel(writer, sheet_name='Summary_Dashboard', startrow=start_row_ext, startcol=1, index=False)
+                ws.cell(row=start_row_ext, column=1, value="Global Extension Breakdown").font = Font(bold=True, size=12, color="FFFFFF")
+                ws.cell(row=start_row_ext, column=1).fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+                ext_counts.to_excel(writer, sheet_name='Summary_Dashboard', startrow=start_row_ext, startcol=0, index=False)
                 
                 # Tab 2: Directory_Analysis
                 df_dir_stats.to_excel(writer, sheet_name='Directory_Analysis', index=False)

@@ -98,7 +98,7 @@ The **Complexity_Metrics** tab provides granular code complexity insights with *
 
 ## Performance
 
-The tool uses multithreading (10 workers by default) to process files concurrently, making it suitable for large codebases.
+The tool uses multithreading to process files concurrently, making it suitable for large codebases.
 
 ### Excluded Folders
 
