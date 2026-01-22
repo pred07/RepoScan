@@ -61,6 +61,14 @@ class Scanner:
                 r'\b__doPostBack\s*\(|'         # ASP.NET Postback
                 r'\bSys\.WebForms\.PageRequestManager|' # UpdatePanel Manager
                 r'\bdata-ajax(?:-\w+)?\s*=|'    # Unobtrusive AJAX Attributes
+                r'\.setRequestHeader\s*\(|'     # XHR Header Config
+                r'\.abort\s*\(|'                # Request Cancellation
+                r'\.getResponseHeader\s*\(|'    # Header Inspection
+                r'\.getAllResponseHeaders\s*\(|'
+                r'new\s+Headers\s*\(|'          # Fetch API Headers
+                r'new\s+Request\s*\(|'          # Fetch API Request
+                r'\bJSON\.parse\s*\(|'          # Native JSON
+                r'\bJSON\.stringify\s*\(|'      # Native JSON
                 r'\$http\b)',                   # Angular 1.x / Vue Resource
                 re.IGNORECASE
             ),
@@ -214,6 +222,26 @@ class Scanner:
                              category = "Config"
                              is_logical_request = False
                              difficulty = "Hard"
+                        elif any(x in lower_match for x in ['setrequestheader', 'getresponseheader', 'getallresponseheaders']):
+                             capability = "Request Header Manipulation"
+                             category = "Config"
+                             is_logical_request = False
+                             difficulty = "Medium"
+                        elif 'abort' in lower_match:
+                             capability = "Request Control"
+                             category = "Utility"
+                             is_logical_request = False
+                             difficulty = "Easy"
+                        elif 'json.parse' in lower_match or 'json.stringify' in lower_match:
+                             capability = "JSON Utility"
+                             category = "Utility"
+                             is_logical_request = False
+                             difficulty = "Easy"
+                        elif 'new headers' in lower_match or 'new request' in lower_match:
+                             capability = "Fetch API Construct"
+                             category = "Construct"
+                             is_logical_request = False
+                             difficulty = "Easy"
                         elif 'new xmlhttprequest' in lower_match or '.open' in lower_match:
                              capability = "XHR Construct"
                              category = "Construct"
