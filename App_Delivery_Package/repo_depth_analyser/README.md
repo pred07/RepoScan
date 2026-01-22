@@ -45,8 +45,8 @@ The tool generates an Excel file: `Application_Depth_Tracker_YYYYMMDD_HHMMSS.xls
 
 1. **Summary_Dashboard**: Overview metrics and global extension breakdown
 2. **Directory_Analysis**: Statistics grouped by directory with depth information
-3. **File_Details**: Basic file metadata with **Full_Path** as first column for easy file location
-4. **Complexity_Metrics**: Dedicated tab with all complexity analysis data, **Full_Path** as first column
+3. **File_Details**: Basic file metadata (path, name, extension, lines, size)
+4. **Complexity_Metrics**: Dedicated tab with all complexity analysis data
 
 ### Complexity Metrics
 
@@ -84,38 +84,3 @@ To maintain accuracy on source code while avoiding dependency bloat, the followi
 **Virtual Environments**: `venv`, `env`, `.venv`, `__pycache__`, `.pytest_cache`
 
 This ensures 100% accuracy on your source code while skipping thousands of third-party files.
-
-## Consistency Verification
-
-To ensure detection accuracy, you can cross-check the tool's output against manual PowerShell counts:
-
-### Step 1: Run Manual Check
-
-```powershell
-# From repo_depth_analyser directory
-cd ..
-.\manual_check.ps1 -TargetDir "path\to\your\project"
-```
-
-The script will output counts and provide a ready-to-use verification command.
-
-### Step 2: Run Verification
-
-Copy the command from the manual check output, or run manually:
-
-```bash
-python verify_consistency.py <inline_css> <internal_style> <inline_js> <internal_script> <ajax_calls>
-
-# Example:
-python verify_consistency.py 45 12 78 23 15
-```
-
-### Verification Output
-
-The tool will:
-- Compare each metric (Inline CSS, Internal Style, Inline JS, Internal Script, AJAX Calls)
-- Display side-by-side comparison with match/mismatch indicators
-- Generate a detailed discrepancy report if mismatches are found
-- Provide actionable recommendations for resolving inconsistencies
-
-**Note**: The Full_Path column in all Excel tabs makes it easy to locate specific files when investigating discrepancies.
