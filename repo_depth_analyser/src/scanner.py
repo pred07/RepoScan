@@ -168,7 +168,6 @@ class Scanner:
                             'Line': line_num,
                             'Code_Snippet': match_str[:100], # Truncate if too long
                             'Capability': capability,
-                            'CSP_Directive': csp,
                             'Difficulty': difficulty
                         })
 

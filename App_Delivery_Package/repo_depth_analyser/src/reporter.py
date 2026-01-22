@@ -183,7 +183,7 @@ class Reporter:
         df_complexity = df_inv[cols_complexity] if not df_inv.empty else pd.DataFrame(columns=cols_complexity)
 
         # 5. AJAX Detailed Report Data
-        df_ajax = pd.DataFrame(ajax_details) if ajax_details else pd.DataFrame(columns=['File_Path', 'Line', 'Code_Snippet', 'Capability', 'CSP_Directive', 'Difficulty'])
+        df_ajax = pd.DataFrame(ajax_details) if ajax_details else pd.DataFrame(columns=['File_Path', 'Line', 'Code_Snippet', 'Capability', 'Difficulty'])
 
         # Rename Directory to Folder Path for File_Details tab
         df_details = df_details.rename(columns={'Directory': 'Folder Path'})
