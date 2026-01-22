@@ -50,6 +50,11 @@ The tool generates an Excel file: `Application_Depth_Tracker_YYYYMMDD_HHMMSS.xls
 2. **Directory_Analysis**: Statistics grouped by directory with depth information
 3. **File_Details**: Basic file metadata (path, name, extension, lines, size)
 4. **Complexity_Metrics**: Detailed per-file complexity analysis with full paths
+5. **AJAX_Detailed_Report (NEW!)**: Granular audit of every AJAX call with:
+   - Line Number
+   - Exact Code Snippet
+   - **Capability Analysis** (Telemetry vs Data vs Script Loading)
+   - **Migration Difficulty** (Easy/Medium/Hard)
 
 ### Summary Dashboard Highlights
 
@@ -73,22 +78,14 @@ The **Summary_Dashboard** tab provides an at-a-glance overview with totals for:
 - Dynamic JS (eval, innerHTML, etc.)
 - Dynamic CSS (style manipulation)
 
-### Complexity Metrics
+## Detailed Documentation
 
-The **Complexity_Metrics** tab provides granular code complexity insights with **100% detection accuracy** matching the main RepoScan utility:
+We have created comprehensive guides to help you understand and remediate the detected patterns:
 
-- **Inline_CSS_Count**: `style="..."` attributes
-- **Internal_CSS_Count**: `<style>...</style>` blocks
-- **Inline_JS_Count**: 40+ event handlers (`onclick`, `onload`, `onsubmit`, `onkeydown`, etc.) and `javascript:` URLs
-- **Internal_JS_Count**: `<script>...</script>` blocks
-- **AJAX_Calls_Count**: Comprehensive detection of:
-  - jQuery: `$.ajax()`, `$.get()`, `$.post()`, `$.getJSON()`, `$.getScript()`, `$.load()`
-  - Native: `XMLHttpRequest`, `fetch()`, `ActiveXObject` (IE legacy)
-  - Modern: `axios()`, `axios.get/post/put/delete/patch()`
-  - Object Literals: `ajax: function()` (jQuery plugins, API wrappers)
-  - Headers: `setRequestHeader('X-Requested-With')`
-- **Dynamic_JS_Gen_Count**: Dynamic script creation (`createElement('script')`, `eval()`, `new Function()`)
-- **Dynamic_CSS_Gen_Count**: Dynamic style creation (`createElement('style')`, `createElement('link')`)
+1.  **[AJAX Mastery Guide](AJAX_MASTERY_GUIDE.md)**: The textbook definition of AJAX, generations of coding patterns, and how to analyze them.
+2.  **[Definitive AJAX Reference](AJAX_DEFINITIVE_REFERENCE.md)**: A finite, "countable" list of every way to make a network request in a browser (XHR, Fetch, Libraries).
+3.  **[AJAX Capabilities & Use Cases](AJAX_CAPABILITIES_AND_USE_CASES.md)**: Identifying the *purpose* of a call (Data Exchange vs Script Loading vs Telemetry) and its Risk Profile.
+4.  **[CSP Migration & AJAX Guide](CSP_MIGRATION_AND_AJAX.md)**: Strategies for implementing CSP, refactoring "Hard" patterns, and achieving "Zero-Miss" detection accuracy.
 
 ## Requirements
 
@@ -110,3 +107,4 @@ To maintain accuracy on source code while avoiding dependency bloat, the followi
 **Virtual Environments**: `venv`, `env`, `.venv`, `__pycache__`, `.pytest_cache`
 
 This ensures 100% accuracy on your source code while skipping thousands of third-party files.
+
