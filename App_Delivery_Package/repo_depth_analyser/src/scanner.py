@@ -148,34 +148,69 @@ class Scanner:
                         
                         lower_match = match_str.lower()
                         
+                        # Determine Category and Capability
+                        category = "Request" # Default
+                        capability = "Data Exchange" # Default
+                        is_logical_request = True
+                        difficulty = "Easy"
+
                         if 'sendbeacon' in lower_match:
                             capability = "Telemetry"
-                            difficulty = "Easy"
+                            category = "Request"
                         elif 'getscript' in lower_match or '.js' in lower_match:
                             capability = "Script Loading (Dynamic)"
+                            category = "Request"
                             difficulty = "Hard"
                         elif '.css' in lower_match:
                             capability = "CSS Loading"
+                            category = "Request"
                             difficulty = "Medium"
                         elif '.html' in lower_match:
                             capability = "UI Injection"
+                            category = "Request"
                             difficulty = "Medium"
-                        elif 'load' in lower_match and 'payload' not in lower_match: # Filter false positive variables
+                        elif 'load' in lower_match and 'payload' not in lower_match: 
                             capability = "UI Injection (Likely)"
+                            category = "Request"
                             difficulty = "Medium"
                         elif any(x in lower_match for x in ['ajaxsetup', 'ajaxprefilter', 'ajaxtransport']):
                             capability = "AJAX Configuration"
+                            category = "Config"
+                            is_logical_request = False
                             difficulty = "Easy"
-                        elif any(x in lower_match for x in ['ajaxstart', 'ajaxsend', 'ajaxsuccess', 'ajaxerror', 'ajaxcomplete', 'ajaxstop']):
+                        elif any(x in lower_match for x in ['ajaxstart', 'ajaxsend', 'ajaxsuccess', 'ajaxerror', 'ajaxcomplete', 'ajaxstop', 'onreadystatechange']):
                             capability = "Global Event Handler"
+                            category = "Event"
+                            is_logical_request = False
                             difficulty = "Hard (Refactoring Risk)"
                         elif any(x in lower_match for x in ['serialize', 'param', 'parsejson']):
                             capability = "Form/Data Utility"
+                            category = "Utility"
+                            is_logical_request = False
                             difficulty = "Easy"
-                            
+                        elif 'new xmlhttprequest' in lower_match or '.open' in lower_match:
+                             capability = "XHR Construct"
+                             category = "Construct"
+                             is_logical_request = False
+                        elif 'new websocket' in lower_match or 'new eventsource' in lower_match:
+                             capability = "Real-time Construct"
+                             category = "Construct"
+                             # For these, the 'new' IS the request initiation effectively (connection open), so maybe keep as Logical?
+                             # ChatGPT said "Partial XHR Constructs... new XMLHttpRequest... .open... .send".
+                             # For WS, 'new WebSocket' opens the connection. 
+                             # But to be consistent with XHR, let's count it. But 'new XHR' is NOT a request.
+                             # Let's mark 'new' XHR as False.
+                             if 'xmlhttprequest' in lower_match: is_logical_request = False
+                             else: is_logical_request = True # WS/EventSource open immediately
+                        
+                        # Only increment total count if it's a logical request (Network Traffic)
+                        if is_logical_request:
+                             metrics['ajax_calls'] += 1
+
                         metrics['ajax_details'].append({
                             'Line': line_num,
-                            'Code_Snippet': match_str[:100], # Truncate if too long
+                            'Code_Snippet': match_str[:100], 
+                            'Category': category,
                             'Capability': capability,
                             'Difficulty': difficulty
                         })
