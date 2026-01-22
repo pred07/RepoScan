@@ -50,11 +50,11 @@ The tool generates an Excel file: `Application_Depth_Tracker_YYYYMMDD_HHMMSS.xls
 2. **Directory_Analysis**: Statistics grouped by directory with depth information
 3. **File_Details**: Basic file metadata (path, name, extension, lines, size)
 4. **Complexity_Metrics**: Detailed per-file complexity analysis with full paths
-5. **AJAX_Detailed_Report (NEW!)**: Granular audit of every AJAX call with:
-   - Line Number
-   - Exact Code Snippet
-   - **Capability Analysis** (Telemetry vs Data vs Script Loading)
-   - **Migration Difficulty** (Easy/Medium/Hard)
+5. **AJAX_Detailed_Report (NEW!)**: Granular audit of every AJAX construct:
+   - **Code & Line Number**: Exact location of the call.
+   - **Category**: Distinguishes **Logical Requests** (Network Traffic) from **Constructs** (Events, Configuration, Utilities).
+   - **Capability Analysis**: (Telemetry vs Data vs Script Loading).
+   - **Migration Difficulty**: (Easy/Medium/Hard).
 
 ### Summary Dashboard Highlights
 
@@ -70,13 +70,21 @@ The **Summary_Dashboard** tab provides an at-a-glance overview with totals for:
 - Internal Script Blocks (<script>)
 - External Script Tags (src="...")
 
-**AJAX & Network Calls:**
-- Total AJAX Calls Detected
-- Files with AJAX
+**AJAX & Network Calls (Semantic Counting):**
+- **Total Logical Requests**: Counts actual network initiations (e.g., `fetch`, `$.ajax`, `xhr.send`, `PageMethods`, `UpdatePanel`).
+  - *Note: Excludes Events (`ajaxStart`), Config (`ajaxSetup`), and Helpers (`serialize`) to avoid inflation.*
+- **Files with AJAX**: Number of files containing any AJAX construct.
 
 **Dynamic Code Generation:**
 - Dynamic JS (eval, innerHTML, etc.)
 - Dynamic CSS (style manipulation)
+
+### Supported Frameworks & Patterns
+The tool now supports **100% Definitive Detection** for:
+- **Core JS**: `XMLHttpRequest` (including `abort`, `headers`), `Fetch API` (`Request`, `Headers`).
+- **jQuery**: All methods (`$.ajax`, `$.get`...), Global Events, Configuration, Utilities.
+- **ASP.NET (Legacy & Modern)**: `Sys.Net.WebRequest`, `PageMethods`, `__doPostBack`, `<asp:UpdatePanel>`, `[WebMethod]`.
+- **Utilities**: `JSON.parse`, `JSON.stringify`.
 
 ## Detailed Documentation
 
