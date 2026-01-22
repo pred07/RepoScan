@@ -25,14 +25,14 @@ def main():
     reporter = Reporter(output_path)
     
     # Run scan
-    inventory, dir_stats = scanner.scan()
+    inventory, dir_stats, ajax_details = scanner.scan()
     
     if not inventory:
         print("No files found to report.")
         return
 
     # Generate Report
-    report_file = reporter.generate_report(inventory, dir_stats)
+    report_file = reporter.generate_report(inventory, dir_stats, ajax_details)
     
     if report_file:
         print(f"\nSUCCESS! Tracker created: {report_file}")

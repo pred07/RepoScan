@@ -101,7 +101,8 @@ class Scanner:
             'lines': 0,
             'inline_css': 0, 'internal_style_blocks': 0, 'external_stylesheet_links': 0,
             'inline_js': 0, 'internal_script_blocks': 0, 'external_script_tags': 0,
-            'ajax_calls': 0, 'has_ajax_calls': 'No', 'dynamic_js': 0, 'dynamic_css': 0
+            'ajax_calls': 0, 'has_ajax_calls': 'No', 'dynamic_js': 0, 'dynamic_css': 0,
+            'ajax_details': []
         }
         
         _, ext = os.path.splitext(filepath)
@@ -131,7 +132,46 @@ class Scanner:
                     metrics['inline_js'] = len(self.patterns['inline_js'].findall(content))
                     metrics['internal_script_blocks'] = len(self.patterns['internal_script_blocks'].findall(content))
                     metrics['external_script_tags'] = len(self.patterns['external_script_tags'].findall(content))
-                    metrics['ajax_calls'] = len(self.patterns['ajax_call'].findall(content))
+                    
+                    # Detailed AJAX Analysis
+                    ajax_matches = self.patterns['ajax_call'].finditer(content)
+                    for match in ajax_matches:
+                        metrics['ajax_calls'] += 1
+                        line_num = content.count('\n', 0, match.start()) + 1
+                        match_str = match.group()
+                        
+                        # Determine Capability & CSP Directive
+                        capability = "Data Exchange"
+                        csp = "connect-src"
+                        difficulty = "Easy"
+                        
+                        lower_match = match_str.lower()
+                        
+                        if 'sendbeacon' in lower_match:
+                            capability = "Telemetry"
+                            csp = "connect-src"
+                            difficulty = "Easy"
+                        elif 'getscript' in lower_match or '.js' in lower_match:
+                            capability = "Script Loading (Dynamic)"
+                            csp = "script-src"
+                            difficulty = "Hard"
+                        elif '.css' in lower_match:
+                            capability = "CSS Loading"
+                            csp = "style-src"
+                            difficulty = "Medium"
+                        elif '.html' in lower_match or 'load' in lower_match:
+                            capability = "UI Injection"
+                            csp = "script-src"
+                            difficulty = "Medium"
+                            
+                        metrics['ajax_details'].append({
+                            'Line': line_num,
+                            'Code_Snippet': match_str[:100], # Truncate if too long
+                            'Capability': capability,
+                            'CSP_Directive': csp,
+                            'Difficulty': difficulty
+                        })
+
                     metrics['has_ajax_calls'] = "Yes" if metrics['ajax_calls'] > 0 else "No"
                     metrics['dynamic_js'] = len(self.patterns['dynamic_js'].findall(content))
                     metrics['dynamic_css'] = len(self.patterns['dynamic_css'].findall(content))
@@ -192,6 +232,8 @@ class Scanner:
                     print(f"File generated an exception: {exc}")
 
         # Aggregate Results
+        all_ajax_details = []
+        
         for item in results:
             root = item['root']
             rel_dir = os.path.relpath(root, self.target_dir)
@@ -218,6 +260,13 @@ class Scanner:
                 'Full_Path': item['file_path']
             })
             
+            # Collect AJAX Details
+            if item['metrics']['ajax_details']:
+                for detail in item['metrics']['ajax_details']:
+                    detail['File_Path'] = item['file_path']
+                    detail['Filename'] = item['file']
+                    all_ajax_details.append(detail)
+            
             # Update Directory Stats
             stats = self.directory_stats[rel_dir]
             stats['count'] += 1
@@ -228,4 +277,4 @@ class Scanner:
             stats['extensions'][item['ext']] += 1
 
         print(f"Scan complete. Found {len(self.file_inventory)} files.")
-        return self.file_inventory, self.directory_stats
+        return self.file_inventory, self.directory_stats, all_ajax_details

@@ -63,8 +63,8 @@ class Reporter:
         # Add AutoFilter
         ws.auto_filter.ref = ws.dimensions
 
-    def generate_report(self, inventory, dir_stats):
-        """Generates a standardized 3-tab Excel report."""
+    def generate_report(self, inventory, dir_stats, ajax_details=None):
+        """Generates a standardized Excel report."""
         self.clean_old_reports()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = os.path.join(self.output_dir, f"Application_Depth_Tracker_{timestamp}.xlsx")
@@ -182,6 +182,9 @@ class Reporter:
         ]
         df_complexity = df_inv[cols_complexity] if not df_inv.empty else pd.DataFrame(columns=cols_complexity)
 
+        # 5. AJAX Detailed Report Data
+        df_ajax = pd.DataFrame(ajax_details) if ajax_details else pd.DataFrame(columns=['File_Path', 'Line', 'Code_Snippet', 'Capability', 'CSP_Directive', 'Difficulty'])
+
         # Rename Directory to Folder Path for File_Details tab
         df_details = df_details.rename(columns={'Directory': 'Folder Path'})
 
@@ -214,12 +217,16 @@ class Reporter:
                 
                 # Tab 4: Complexity_Metrics
                 df_complexity.to_excel(writer, sheet_name='Complexity_Metrics', index=False)
+                
+                # Tab 5: AJAX_Detailed_Report
+                df_ajax.to_excel(writer, sheet_name='AJAX_Detailed_Report', index=False)
 
                 # Apply Styling
                 self._style_worksheet(writer.sheets['Summary_Dashboard'])
                 self._style_worksheet(writer.sheets['Directory_Analysis'])
                 self._style_worksheet(writer.sheets['File_Details'])
                 self._style_worksheet(writer.sheets['Complexity_Metrics'])
+                self._style_worksheet(writer.sheets['AJAX_Detailed_Report'])
 
             print("Report generated successfully.")
             return output_file
