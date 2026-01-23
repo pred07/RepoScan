@@ -14,8 +14,9 @@ WINDOWS USERS
 1. Double-click "RepoScan.exe"
 2. Enter the path to scan when prompted
    Example: C:\Projects\MyApplication
-3. Press Enter and wait for completion
-4. Find your report in the "output" folder
+3. Enter output directory name (or press Enter for default)
+4. Enable verbose mode (y/n) to see detailed progress
+5. Find your report in the "output" folder
 
 ==================================================
 LINUX / MAC USERS
@@ -24,8 +25,9 @@ LINUX / MAC USERS
 2. Run: ./RepoScan_Linux
 3. Enter the path to scan when prompted
    Example: /home/user/projects/myapp
-4. Press Enter and wait for completion
-5. Find your report in the "output" folder
+4. Enter output directory name (or press Enter for default)
+5. Enable verbose mode (y/n) to see detailed progress
+6. Find your report in the "output" folder
 
 ==================================================
 OUTPUT LOCATION

@@ -8,39 +8,56 @@ from src.reporter import Reporter
 
 def print_banner():
     """Display professional branded banner"""
-    width = 66
+    width = 80
     banner = f"""
 {'=' * width}
-{'RepoScan v1.0'.center(width)}
-{'Powered by Castellum Labs'.center(width)}
-{'Application Depth Analysis & Reporting Tool'.center(width)}
+{'RepoScan'.center(width)}
+
+{'RepoScan v1.0. Property owned by Castellum Labs.'.center(width)}
+{'Authors: Gopikrishna Manikyala, Sushanth Pasham, Brijith K Biju'.center(width)}
 {'=' * width}
 """
     print(banner)
 
 def print_footer(summary_stats, output_file):
-    """Display completion footer with summary"""
-    print("\n" + "=" * 66)
-    print("           Castellum Labs RepoScan - Analysis Complete")
-    print("=" * 66)
-    print("\nSCAN SUMMARY:")
-    print("-" * 66)
-    print(f"  Total Files Scanned:      {summary_stats.get('total_files', 0):,}")
-    print(f"  Total Directories:        {summary_stats.get('total_dirs', 0):,}")
-    print(f"  Total File Size:          {summary_stats.get('total_size_mb', 0):.2f} MB")
-    print(f"  Lines of Code:            {summary_stats.get('total_lines', 0):,}")
-    print()
-    print(f"  AJAX Calls Detected:      {summary_stats.get('ajax_calls', 0):,}")
-    print(f"  Inline CSS:               {summary_stats.get('inline_css', 0):,}")
-    print(f"  Inline JS:                {summary_stats.get('inline_js', 0):,}")
-    print(f"  Internal Style Blocks:    {summary_stats.get('internal_css', 0):,}")
-    print(f"  Internal Script Blocks:   {summary_stats.get('internal_js', 0):,}")
-    print(f"  External Stylesheets:     {summary_stats.get('external_css', 0):,}")
-    print(f"  External Scripts:         {summary_stats.get('external_js', 0):,}")
-    print("-" * 66)
-    print(f"\nOutput Location:")
-    print(f"  {output_file}")
-    print("\nAnalysis complete. Report ready for review.\n")
+    """Display completion footer with summary and save to text file"""
+    
+    summary_text = f"""
+{'=' * 66}
+           Castellum Labs RepoScan - Analysis Complete
+{'=' * 66}
+
+SCAN SUMMARY:
+{'-' * 66}
+  Total Files Scanned:      {summary_stats.get('total_files', 0):,}
+  Total Directories:        {summary_stats.get('total_dirs', 0):,}
+  Total File Size:          {summary_stats.get('total_size_mb', 0):.2f} MB
+  Lines of Code:            {summary_stats.get('total_lines', 0):,}
+
+  AJAX Calls Detected:      {summary_stats.get('ajax_calls', 0):,}
+  Inline CSS:               {summary_stats.get('inline_css', 0):,}
+  Inline JS:                {summary_stats.get('inline_js', 0):,}
+  Internal Style Blocks:    {summary_stats.get('internal_css', 0):,}
+  Internal Script Blocks:   {summary_stats.get('internal_js', 0):,}
+  External Stylesheets:     {summary_stats.get('external_css', 0):,}
+  External Scripts:         {summary_stats.get('external_js', 0):,}
+{'-' * 66}
+
+Output Location:
+  {output_file}
+
+Analysis complete. Report ready for review.
+"""
+    print(summary_text)
+    
+    # Save to file
+    try:
+        output_dir = os.path.dirname(output_file)
+        summary_path = os.path.join(output_dir, "scan_summary.txt")
+        with open(summary_path, "w", encoding='utf-8') as f:
+            f.write(summary_text)
+    except Exception as e:
+        print(f"Warning: Could not save summary text file: {e}")
 
 def main():
     start_time = time.time()
