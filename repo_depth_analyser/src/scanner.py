@@ -71,8 +71,55 @@ class Scanner:
                 r'\bJSON\.stringify\s*\(|'      # Native JSON
                 r'<\w+:UpdatePanel|'            # ASP.NET Partial Rendering
                 r'<\w+:ScriptManager|'          # ASP.NET AJAX Enabler
+                r'\bScriptManager\.RegisterStartupScript\s*\(|' # Server-Side Script Injection
+                r'\bScriptManager\.RegisterClientScriptBlock\s*\(|'
+                r'\bClientScript\.RegisterStartupScript\s*\(|'
+                r'\bClientScript\.RegisterClientScriptBlock\s*\(|'
+                r'\bPage\.ClientScript\s*\.|'
                 r'\[WebMethod\]|'               # ASP.NET AJAX Endpoint
-                r'\$http\b)',                   # Angular 1.x / Vue Resource
+                r'\[ScriptMethod\]|'            # ASP.NET Script Service
+                r'\[WebService\]|'              # Legacy Web Service
+                r'\[OperationContract\]|'       # WCF
+                r'\[ApiController\]|'           # Web API 2 / Core
+                r'\[Route\(\s*["\']api/|'       # API Route
+                r'\[HubName\]|'                 # SignalR Hub
+                r'\bhubConnection\.start\s*\(|' # SignalR Client
+                r'\bClients\.All|'              # SignalR Server
+                r'\bClients\.Caller|'
+                r'@Ajax\.ActionLink|'           # Razor AJAX Helper
+                r'@Ajax\.BeginForm|'
+                r'@Url\.Action\s*\(|'           # URL Generation for AJAX
+                r'@Url\.Content\s*\(|'
+                r'<system\.web\.extensions>|'   # Web.config AJAX
+                r'<scriptResourceHandler>|'
+                r'<telerik:RadAjaxManager|'     # Telerik
+                r'<telerik:RadAjaxPanel|'
+                r'\bRadAjaxManager\b|'
+                r'\bASPxCallback|'              # DevExpress
+                r'\bASPxCallbackPanel|'
+                r'\$http\b|'                    # Angular 1.x / Vue Resource
+                r'\bthis\.http\.get\s*\(|'      # Angular HttpClient
+                r'\bthis\.http\.post\s*\(|'
+                r'\buseQuery\s*\(|'             # React/TanStack Query
+                r'\buseMutation\s*\(|'
+                r'\bnew\s+Ajax\.Request\s*\(|'  # Prototype.js
+                r'\bnew\s+Request(?:.JSON)?\s*\(|' # MooTools
+                r'\bdataType\s*:\s*["\']jsonp["\']|' # jQuery JSONP
+                r'\bResponse\.Write\s*\(\s*["\']<script|' # Server-Side Script Injection (Direct)
+                r'\bChannelFactory<|'           # WCF Client
+                r'\bHttpClient\s+|'             # Blazor / .NET HttpClient usage
+                r'\bIJSRuntime\b|'              # Blazor JS Interop
+                r'\[Http(?:Get|Post|Put|Delete|Patch|Options)\]|' # .NET API Attributes
+                r'\bbackgroundFetch\b|'         # Background Fetch API
+                r'\bIJSRuntime\b|'              # Blazor JS Interop
+                r'\[Http(?:Get|Post|Put|Delete|Patch|Options)\]|' # .NET API Attributes
+                r'\bbackgroundFetch\b|'         # Background Fetch API
+                r'target=["\']_?iframe["\']|'   # Hidden Iframe Target (Naive)
+                r'<iframe\b[^>]*style=["\'].*display:\s*none|' # Hidden Iframe (Structure)
+                r'<iframe\b[^>]*style=["\'].*display:\s*none|' # Hidden Iframe (Structure)
+                r'\bnew\s+FormData\b|'          # Form Data Constructor
+                r'\bnew\s+Image\s*\(|'          # Pixel Tracking (Image)
+                r'\.src\s*=\s*["\']http)',      # Pixel Tracking (src assignment)
                 re.IGNORECASE
             ),
 
@@ -126,7 +173,11 @@ class Scanner:
         ext = ext.lower()
         
         # Relevant Extensions for Client-Side Code
-        web_exts = {'.html', '.htm', '.aspx', '.ascx', '.cshtml', '.master', '.php', '.jsp', '.js', '.ts', '.vue', '.jsx', '.tsx'}
+        web_exts = {
+            '.html', '.htm', '.aspx', '.ascx', '.cshtml', '.vbhtml', '.master', 
+            '.php', '.jsp', '.js', '.ts', '.vue', '.jsx', '.tsx', '.razor',
+            '.cs', '.vb', '.ashx', '.asmx', '.config'
+        }
         
         try:
             # Skip very large files (> 10MB) to prevent memory issues
@@ -153,7 +204,7 @@ class Scanner:
                     # Detailed AJAX Analysis
                     ajax_matches = self.patterns['ajax_call'].finditer(content)
                     for match in ajax_matches:
-                        metrics['ajax_calls'] += 1
+                        # metrics['ajax_calls'] += 1  <-- REMOVED: Only increment for Logical Requests
                         line_num = content.count('\n', 0, match.start()) + 1
                         match_str = match.group()
                         
@@ -249,16 +300,134 @@ class Scanner:
                              capability = "Partial Rendering (UpdatePanel)"
                              category = "Request"
                              difficulty = "Hard"
-                        elif 'scriptmanager' in lower_match:
-                             capability = "AJAX Enabler"
-                             category = "Config"
+                        elif 'scriptmanager' in lower_match or 'clientscript' in lower_match:
+                             capability = "Server-Side Script Injection"
+                             category = "Server"
                              is_logical_request = False
-                             difficulty = "Medium"
-                        elif 'webmethod' in lower_match:
+                             difficulty = "Hard"
+                        elif 'webmethod' in lower_match or 'scriptmethod' in lower_match or 'webservice' in lower_match:
                              capability = "AJAX Endpoint (Server)"
                              category = "Server"
                              is_logical_request = False
                              difficulty = "Medium"
+                        elif 'apicontroller' in lower_match or '[route' in lower_match:
+                             capability = "API Endpoint (Server)"
+                             category = "Server"
+                             is_logical_request = False
+                             difficulty = "Medium"
+                        elif 'operationcontract' in lower_match:
+                             capability = "WCF Endpoint (Server)"
+                             category = "Server"
+                             is_logical_request = False
+                             difficulty = "Hard"
+                        elif 'hubname' in lower_match or 'clients.all' in lower_match or 'clients.caller' in lower_match:
+                             capability = "SignalR Hub (Server)"
+                             category = "Server"
+                             is_logical_request = False
+                             difficulty = "Hard"
+                        elif 'hubconnection' in lower_match:
+                             capability = "SignalR Client"
+                             category = "Real-time"
+                             is_logical_request = True
+                             difficulty = "Medium"
+                        elif '@ajax' in lower_match:
+                             capability = "Razor AJAX Helper"
+                             category = "Request"
+                             is_logical_request = True
+                             difficulty = "Medium"
+                        elif '@url' in lower_match:
+                             capability = "Dynamic URL Generation"
+                             category = "Construct"
+                             # Helper itself isn't a request, but often inside one. Let's mark as Construct.
+                             is_logical_request = False 
+                             difficulty = "Easy"
+                        elif '<system.web.extensions>' in lower_match or 'scriptresourcehandler' in lower_match:
+                             capability = "AJAX Configuration"
+                             category = "Config"
+                             is_logical_request = False
+                             difficulty = "Medium"
+                        elif 'radajax' in lower_match or 'telerik' in lower_match:
+                             capability = "Telerik AJAX Control"
+                             category = "Third-Party"
+                             is_logical_request = True # Often wrappers around UpdatePanel
+                             difficulty = "Hard (Vendor Lock-in)"
+                        elif 'aspxcallback' in lower_match:
+                             capability = "DevExpress AJAX Control"
+                             category = "Third-Party"
+                             is_logical_request = True
+                             difficulty = "Hard (Vendor Lock-in)"
+
+                        elif 'response.write' in lower_match:
+                             capability = "Direct Script Injection"
+                             category = "Server"
+                             is_logical_request = False
+                             difficulty = "High (Security Risk)"
+                        elif 'channelfactory' in lower_match:
+                             capability = "WCF Client Proxy"
+                             category = "Server"
+                             is_logical_request = True # It initiates a request
+                             difficulty = "Hard"
+                        elif 'httpclient' in lower_match:
+                             capability = ".NET HttpClient"
+                             category = "Server/Blazor"
+                             is_logical_request = True
+                             difficulty = "Easy"
+                        elif 'ijsruntime' in lower_match:
+                             capability = "Blazor JS Interop"
+                             category = "Blazor"
+                             is_logical_request = False
+                             difficulty = "Medium"
+                        elif '[http' in lower_match:
+                             capability = "API Endpoint Verb"
+                             category = "Server"
+                             is_logical_request = False
+                             difficulty = "Easy"
+                        elif 'backgroundfetch' in lower_match:
+                             capability = "Background Sync/Fetch"
+                             category = "Service Worker"
+                             is_logical_request = True
+                             difficulty = "Medium"
+                        elif 'iframe' in lower_match:
+                             capability = "Hidden Iframe (Pseudo-AJAX)"
+                             category = "Legacy Pattern"
+                             is_logical_request = True
+                             difficulty = "Hard"
+                        elif 'formdata' in lower_match:
+                             capability = "Form Data Construction"
+                             category = "Construct"
+                             # It's usually passed TO a fetch or XHR, so it's a Construct, not a request itself.
+                             is_logical_request = False
+                             difficulty = "Easy"
+                        elif 'new image' in lower_match or '.src' in lower_match:
+                             capability = "Pixel Tracking (Image)"
+                             category = "Request"
+                             is_logical_request = True
+                             difficulty = "Easy"
+                        elif 'usequery' in lower_match or 'usemutation' in lower_match:
+                             capability = "Modern Data Fetching (React Query)"
+                             category = "Modern Framework"
+                             is_logical_request = True
+                             difficulty = "Easy"
+                        elif 'this.http' in lower_match:
+                             capability = "Angular HttpClient"
+                             category = "Modern Framework"
+                             is_logical_request = True
+                             difficulty = "Easy"
+                        elif 'ajax.request' in lower_match or 'new request' in lower_match: # carefully distinguishing MooTools/Prototype
+                             if 'ajax.request' in lower_match:
+                                 capability = "Prototype.js AJAX"
+                                 category = "Legacy Lib"
+                             else:
+                                 capability = "MooTools/Fetch Request" # 'new Request' is also Fetch API!
+                                 if 'mootools' in lower_match: category = "Legacy Lib" # unlikely to match just 'mootools' string here
+                                 else: category = "Construct" # Assume Fetch API unless context proves otherwise
+                             is_logical_request = True
+                             difficulty = "Hard"
+                        elif 'jsonp' in lower_match:
+                             capability = "JSONP (Legacy Cross-Domain)"
+                             category = "Legacy Pattern"
+                             is_logical_request = True
+                             difficulty = "Hard (Security Risk)"
                         elif 'new xmlhttprequest' in lower_match or '.open' in lower_match:
                              capability = "XHR Construct"
                              category = "Construct"
@@ -276,6 +445,7 @@ class Scanner:
                         
                         # Only increment total count if it's a logical request (Network Traffic)
                         if is_logical_request:
+                             print(f"DEBUG: Incrementing for {match_str} (Category: {category})")
                              metrics['ajax_calls'] += 1
 
                         metrics['ajax_details'].append({

@@ -9,6 +9,11 @@ A standalone utility to analyze codebase structure and complexity metrics.
 - **Directory Statistics**: Provides breakdown by directory depth and file extensions
 - **Multithreaded Scanning**: Fast processing using concurrent file analysis
 - **Excel Reports**: Professional, styled Excel output with multiple tabs
+- **.NET Full-Stack Support**: Detects server-side triggers, Razor helpers, and legacy Controls
+
+## Documentation
+
+For a complete explanation of the tool's architecture, pattern matching logic, and execution flow, please refer to the **[Technical Deep Dive](TECHNICAL_DEEP_DIVE.md)**.
 
 ## Installation
 
@@ -115,4 +120,11 @@ To maintain accuracy on source code while avoiding dependency bloat, the followi
 **Virtual Environments**: `venv`, `env`, `.venv`, `__pycache__`, `.pytest_cache`
 
 This ensures 100% accuracy on your source code while skipping thousands of third-party files.
+
+## Known Limitations
+
+To guarantee "Zero-Miss" accuracy, the detection engine is designed to be **Aggressive**.
+*   It counts constructs within comments (`// fetch(url)`) or string literals (`var msg = "use $.ajax"`) as detections.
+*   **Rationale**: We prioritize finding *every hidden call* over suppressing potential noise. A false positive is a nuisance; a false negative (missed call) is a migration risk.
+
 
