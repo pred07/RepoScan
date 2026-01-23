@@ -24,7 +24,8 @@ class Scanner:
             'inline_css': re.compile(r'style\s*=\s*["\'][^"\']*["\']', re.IGNORECASE),
             'internal_style_blocks': re.compile(r'<style\b[^>]*>[\s\S]*?</style>', re.IGNORECASE),
             'external_stylesheet_links': re.compile(
-                r'<link\b[^>]*rel\s*=\s*["\']stylesheet["\'][^>]*>', re.IGNORECASE
+                r'(?:<link\b[^>]*rel\s*=\s*["\']stylesheet["\'][^>]*>|@import\s+(?:url\()?["\'][^"\']+["\'])', 
+                re.IGNORECASE
             ),
 
             # 2. JS Patterns
@@ -36,7 +37,14 @@ class Scanner:
                 r'<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?</script>', re.IGNORECASE
             ),
             'external_script_tags': re.compile(
-                r'<script\b[^>]*src\s*=\s*["\'][^"\']+["\'][^>]*>', re.IGNORECASE
+                r'(?:<script\b[^>]*src\s*=\s*["\'][^"\']+["\'][^>]*>|\bimport\s+(?:[\w\s{},*]+from\s+)?["\'][^"\']+["\']|\brequire\s*\(\s*["\'][^"\']+["\']\s*\)|\bdefine\s*\(\s*\[)', 
+                re.IGNORECASE
+            ),
+            
+            # 2a. Modern CSS-in-JS
+            'css_in_js': re.compile(
+                r'(?:styled\.\w+|css`|styled\s*\()',
+                re.IGNORECASE
             ),
 
             # 3. AJAX / Network Calls
@@ -150,9 +158,12 @@ class Scanner:
                 r'\.href\s*=\s*["\'][^"\']+\.css["\']|'
                 r'\.style\.\w+\s*=|'
                 r'\.style\[\s*["\'][^"\']+["\']\s*\]\s*=|'
+                r'\.cssText\s*=|' # Bulk Style Assignment
                 r'setProperty\s*\(|'
                 r'insertRule\s*\(|'
                 r'addRule\s*\(|'
+                r'setAttribute\s*\(\s*["\']style["\']|' # Dynamic Style Attribute
+                r'\.classList\.(?:add|remove|toggle|replace)\s*\(|' # Indirect CSS
                 r'new\s+CSSStyleSheet\s*\(|'
                 r'adoptedStyleSheets)',
                 re.IGNORECASE
@@ -453,12 +464,16 @@ class Scanner:
                             'Code_Snippet': match_str[:100], 
                             'Category': category,
                             'Capability': capability,
-                            'Difficulty': difficulty
+                            'Difficulty': difficulty,
+                            'Is_Counted': "Yes" if is_logical_request else "No"
                         })
 
                     metrics['has_ajax_calls'] = "Yes" if metrics['ajax_calls'] > 0 else "No"
                     metrics['dynamic_js'] = len(self.patterns['dynamic_js'].findall(content))
                     metrics['dynamic_css'] = len(self.patterns['dynamic_css'].findall(content))
+                    
+                    # Add CSS-in-JS to Dynamic CSS count (it's effectively dynamic)
+                    metrics['dynamic_css'] += len(self.patterns['css_in_js'].findall(content))
                 
         except (UnicodeDecodeError, PermissionError) as e:
             # Silently skip files with encoding or permission issues
