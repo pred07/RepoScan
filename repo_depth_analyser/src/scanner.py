@@ -456,7 +456,6 @@ class Scanner:
                         
                         # Only increment total count if it's a logical request (Network Traffic)
                         if is_logical_request:
-                             print(f"DEBUG: Incrementing for {match_str} (Category: {category})")
                              metrics['ajax_calls'] += 1
 
                         metrics['ajax_details'].append({

@@ -25,10 +25,18 @@ def print_footer(summary_stats, output_file):
     print("=" * 66)
     print("\nSCAN SUMMARY:")
     print("-" * 66)
-    print(f"  Total Files Scanned:    {summary_stats.get('total_files', 0):,}")
-    print(f"  Total Directories:      {summary_stats.get('total_dirs', 0):,}")
-    print(f"  AJAX Calls Detected:    {summary_stats.get('ajax_calls', 0):,}")
-    print(f"  Lines of Code:          {summary_stats.get('total_lines', 0):,}")
+    print(f"  Total Files Scanned:      {summary_stats.get('total_files', 0):,}")
+    print(f"  Total Directories:        {summary_stats.get('total_dirs', 0):,}")
+    print(f"  Total File Size:          {summary_stats.get('total_size_mb', 0):.2f} MB")
+    print(f"  Lines of Code:            {summary_stats.get('total_lines', 0):,}")
+    print()
+    print(f"  AJAX Calls Detected:      {summary_stats.get('ajax_calls', 0):,}")
+    print(f"  Inline CSS:               {summary_stats.get('inline_css', 0):,}")
+    print(f"  Inline JS:                {summary_stats.get('inline_js', 0):,}")
+    print(f"  Internal Style Blocks:    {summary_stats.get('internal_css', 0):,}")
+    print(f"  Internal Script Blocks:   {summary_stats.get('internal_js', 0):,}")
+    print(f"  External Stylesheets:     {summary_stats.get('external_css', 0):,}")
+    print(f"  External Scripts:         {summary_stats.get('external_js', 0):,}")
     print("-" * 66)
     print(f"\nOutput Location:")
     print(f"  {output_file}")
@@ -99,12 +107,28 @@ def main():
     total_dirs = len(dir_stats)
     ajax_calls = sum(1 for detail in ajax_details if detail.get('Is_Counted') == 'Yes')
     total_lines = sum(item.get('Total_Lines', 0) for item in inventory)
+    total_size_kb = sum(item.get('Size_KB', 0) for item in inventory)
+    total_size_mb = total_size_kb / 1024
+    
+    inline_css = sum(item.get('Inline_CSS_Count', 0) for item in inventory)
+    inline_js = sum(item.get('Inline_JS_Count', 0) for item in inventory)
+    internal_css = sum(item.get('Internal_Style_Blocks_Count', 0) for item in inventory)
+    internal_js = sum(item.get('Internal_Script_Blocks_Count', 0) for item in inventory)
+    external_css = sum(item.get('External_Stylesheet_Links_Count', 0) for item in inventory)
+    external_js = sum(item.get('External_Script_Tags_Count', 0) for item in inventory)
     
     summary_stats = {
         'total_files': total_files,
         'total_dirs': total_dirs,
         'ajax_calls': ajax_calls,
-        'total_lines': total_lines
+        'total_lines': total_lines,
+        'total_size_mb': total_size_mb,
+        'inline_css': inline_css,
+        'inline_js': inline_js,
+        'internal_css': internal_css,
+        'internal_js': internal_js,
+        'external_css': external_css,
+        'external_js': external_js
     }
     
     # Generate Report

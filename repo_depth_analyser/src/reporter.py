@@ -189,7 +189,6 @@ class Reporter:
         df_details = df_details.rename(columns={'Directory': 'Folder Path'})
 
         # --- Write to Excel ---
-        print(f"Generating report at {output_file}...")
         try:
             with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
                 # Tab 1: Summary_Dashboard
