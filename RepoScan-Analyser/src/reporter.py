@@ -198,7 +198,7 @@ class Reporter:
         # Table Header
         ws.cell(row=6, column=1, value="Detection Summary").font = Font(bold=True, size=14)
         
-        headers = ["Category", "Count"]
+        headers = ["Category", "Count", "Criteria / Reference"]
         header_row = 7
         for col, h in enumerate(headers, 1):
             cell = ws.cell(row=header_row, column=col)
@@ -209,31 +209,33 @@ class Reporter:
 
         # Table Data
         data = [
-            ("Inline JavaScript Findings", js_count),
-            ("Inline CSS Findings", css_count),
-            ("External Resources", ext_count),
-            ("Total Issues", total_count),
-            ("", ""),  # Spacer
-            ("Total AJAX Calls Found", ajax_count),
-            ("  - Inline AJAX", inline_ajax),
-            ("  - External AJAX", external_ajax),
-            ("  - With Server Dependencies", server_deps),
-            ("  - Clean/Extractable", clean_ajax),
-            ("", ""),
-            ("Total Dynamic Code Sinks Found", dynamic_count),
+            ("Inline JavaScript Findings", js_count, "Count of <script> blocks (excluding src=)"),
+            ("Inline CSS Findings", css_count, "Count of <style> blocks"),
+            ("External Resources", ext_count, "Count of <script src=...> or <link rel=stylesheet> tags"),
+            ("Total Issues", total_count, "Sum of Inline JS + Inline CSS + External Resources"),
+            ("", "", ""),  # Spacer
+            ("Total AJAX Calls Found", ajax_count, "Regex match for $.ajax, fetch, xhr, axios, etc."),
+            ("  - Inline AJAX", inline_ajax, "AJAX patterns found inside <script> blocks"),
+            ("  - External AJAX", external_ajax, "AJAX patterns found inside local .js files"),
+            ("  - With Server Dependencies", server_deps, "AJAX containing @Model, @ViewBag, or ASP tags"),
+            ("  - Clean/Extractable", clean_ajax, "AJAX with no server-side dependency markers"),
+            ("", "", ""),
+            ("Total Dynamic Code Sinks Found", dynamic_count, "Regex match for eval(), innerHTML, document.write()"),
         ]
 
-        for i, (cat, count) in enumerate(data):
+        for i, (cat, count, criteria) in enumerate(data):
             row = header_row + 1 + i
             ws.cell(row=row, column=1, value=cat)
             ws.cell(row=row, column=2, value=count)
+            ws.cell(row=row, column=3, value=criteria)
             # Add simple border
-            for col in [1, 2]:
+            for col in [1, 2, 3]:
                 ws.cell(row=row, column=col).border = Border(bottom=Side(style='thin'))
 
         # Adjust widths
         ws.column_dimensions['A'].width = 35
         ws.column_dimensions['B'].width = 15
+        ws.column_dimensions['C'].width = 60
 
     def _create_js_sheet(self):
         # Columns: File Path, File Name, Extracted File, Type, Start Line, End Line, Code Snippet, AJAX Detected, Dynamic Code?, Full Code
@@ -348,8 +350,8 @@ class Reporter:
 
     def _create_ajax_sheet(self):
         """Generates AJAX Code tab with detected AJAX calls and color coding."""
-        # Columns: #, File Path, File Name, AJAX Type, Start Line, End Line, Endpoint/URL, Has Server Dependencies, Is Inline, Is Internal, Is External, Code Snippet, Full Code
-        headers = ["#", "File Path", "File Name", "AJAX Type", "Start Line", "End Line", 
+        # Columns: #, File Path, File Name, Category, Capability, Start Line, End Line, Endpoint/URL, Has Server Dependencies, Is Inline, Is Internal, Is External, Code Snippet, Full Code
+        headers = ["#", "File Path", "File Name", "Category", "Capability", "Start Line", "End Line", 
                    "Endpoint/URL", "Has Server Dependencies", "Is Inline?", "Is Internal?", "Is External?", "Code Snippet", "Full Code"]
         data = []
         
@@ -370,7 +372,8 @@ class Reporter:
                         row_num,
                         f.file_path,
                         os.path.basename(f.file_path),
-                        f"{detail.get('Category', 'Unknown')} - {detail.get('Capability', 'Unknown')}", # AJAX Type
+                        detail.get('Category', 'Unknown'),   # New Col: Category (e.g. jQuery)
+                        detail.get('Capability', 'Unknown'), # New Col: Capability (e.g. Real Call)
                         detail.get('Line', f.start_line),
                         f.end_line, # End line is approximate for the whole block
                         detail.get('Endpoint', 'Unknown'),
@@ -388,7 +391,8 @@ class Reporter:
                     row_num,
                     f.file_path,
                     os.path.basename(f.file_path),
-                    f.ajax_pattern or "Unknown",
+                    f.ajax_pattern or "Unknown", # Category Fallback
+                    "Unknown",                   # Capability Fallback
                     f.start_line,
                     f.end_line,
                     f.endpoint_url or "Unknown/Dynamic",
@@ -409,8 +413,8 @@ class Reporter:
             
             # Color code rows (starting from row 2, after header)
             for row in range(2, ws.max_row + 1):
-                # Server Dependencies column (H = column 8)
-                server_cell = ws.cell(row=row, column=8)
+                # Server Dependencies column (I = column 9)
+                server_cell = ws.cell(row=row, column=9)
                 if server_cell.value == "Yes":
                     server_cell.fill = PatternFill("solid", fgColor="FFC7CE")  # Red
                     server_cell.font = Font(color="9C0006")
