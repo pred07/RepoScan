@@ -139,7 +139,6 @@ def run_static_scan(config):
 
             print("Reports generation successful.")
             print("- Code_Inventory.xlsx")
-            print("- AJAX_Assessment.xlsx")
             print("- Refactoring_Tracker.xlsx")
             print("- Crawler_Input.xlsx")
 
