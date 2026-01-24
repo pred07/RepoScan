@@ -173,18 +173,21 @@ class Reporter:
         ws.cell(row=4, column=1, value="Core Path:")
         ws.cell(row=4, column=2, value=os.path.abspath(self.config.root_folder))
 
-        # Stats
-        # Stats
-        js_count = len([f for f in self.findings if f.category == 'JS'])
-        css_count = len([f for f in self.findings if f.category == 'CSS'])
+        # Stats Breakdown
+        inline_js = len([f for f in self.findings if f.category == 'JS' and f.source_type == 'INLINE'])
+        internal_js = len([f for f in self.findings if f.category == 'JS' and f.source_type == 'LOCAL'])
+        
+        inline_css = len([f for f in self.findings if f.category == 'CSS' and f.source_type == 'INLINE'])
+        internal_css = len([f for f in self.findings if f.category == 'CSS' and f.source_type == 'LOCAL'])
+        
         ext_count = len([f for f in self.findings if f.category == 'External'])
         
-        # Explicit sum to match user expectation (Reported Categories)
-        total_count = js_count + css_count + ext_count
+        # Explicit sum
+        total_count = inline_js + internal_js + inline_css + internal_css + ext_count
         
         # Debug mismatch if any
         if len(self.findings) != total_count:
-            logging.debug(f"Note: Total findings ({len(self.findings)}) != Displayed Sum ({total_count}). Some categories hidden.")
+            logging.debug(f"Note: Total findings ({len(self.findings)}) != Displayed Sum ({total_count}).")
         
         # AJAX & Dynamic Stats (Literal Counts)
         ajax_count = sum([getattr(f, 'ajax_count', 0) for f in self.findings])
@@ -209,10 +212,12 @@ class Reporter:
 
         # Table Data
         data = [
-            ("Inline JavaScript Findings", js_count, "Count of <script> blocks (excluding src=)"),
-            ("Inline CSS Findings", css_count, "Count of <style> blocks"),
-            ("External Resources", ext_count, "Count of <script src=...> or <link rel=stylesheet> tags"),
-            ("Total Issues", total_count, "Sum of Inline JS + Inline CSS + External Resources"),
+            ("Inline JavaScript", inline_js, "Code inside <script> tags within HTML/ASPX files"),
+            ("Internal JavaScript", internal_js, "Standalone local .js files"),
+            ("Inline CSS", inline_css, "Code inside <style> tags within HTML/ASPX files"),
+            ("Internal CSS", internal_css, "Standalone local .css files"),
+            ("External Resources", ext_count, "References to remote scripts/styles (src=http...)"),
+            ("Total Issues", total_count, "Sum of the above 5 categories"),
             ("", "", ""),  # Spacer
             ("Total AJAX Calls Found", ajax_count, "Regex match for $.ajax, fetch, xhr, axios, etc."),
             ("  - Inline AJAX", inline_ajax, "AJAX patterns found inside <script> blocks"),
@@ -235,6 +240,7 @@ class Reporter:
         # Adjust widths
         ws.column_dimensions['A'].width = 35
         ws.column_dimensions['B'].width = 15
+        ws.column_dimensions['C'].width = 60
         ws.column_dimensions['C'].width = 60
 
     def _create_js_sheet(self):
