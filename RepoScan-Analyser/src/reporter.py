@@ -460,7 +460,8 @@ class Reporter:
     def _create_ajax_sheet(self):
         """Generates AJAX Code tab with detected AJAX calls and color coding."""
         # Columns: #, File Path, File Name, Category, Capability, Start Line, End Line, Endpoint/URL, Has Server Dependencies, Is Inline, Is Internal, Is External, Code Snippet, Full Code
-        headers = ["#", "File Path", "File Name", "Category", "Capability", "Start Line", "End Line", 
+        # Added "Is Valid Call?" column
+        headers = ["#", "File Path", "File Name", "Category", "Capability", "Is Valid Call?", "Start Line", "End Line", 
                    "Endpoint/URL", "Has Server Dependencies", "Is Inline?", "Is Internal?", "Is External?", "Code Snippet", "Full Code"]
         data = []
         
@@ -481,27 +482,29 @@ class Reporter:
                         row_num,
                         f.file_path,
                         os.path.basename(f.file_path),
-                        detail.get('Category', 'Unknown'),   # New Col: Category (e.g. jQuery)
-                        detail.get('Capability', 'Unknown'), # New Col: Capability (e.g. Real Call)
+                        detail.get('Category', 'Unknown'),   
+                        detail.get('Capability', 'Unknown'), 
+                        detail.get('Is_Counted', 'Yes'), # New Col: Is Valid Call?
                         detail.get('Line', f.start_line),
-                        f.end_line, # End line is approximate for the whole block
+                        f.end_line, 
                         detail.get('Endpoint', 'Unknown'),
                         "Yes" if f.has_server_deps else "No",
                         is_inline,
                         is_internal,
                         is_external,
                         detail.get('Code_Snippet', f.snippet[:100]),
-                        f.full_code # Full context is useful
+                        f.full_code 
                     ])
                     row_num += 1
             else:
-                # Fallback for legacy Findings (safe guard)
+                # Fallback
                 data.append([
                     row_num,
                     f.file_path,
                     os.path.basename(f.file_path),
-                    f.ajax_pattern or "Unknown", # Category Fallback
-                    "Unknown",                   # Capability Fallback
+                    f.ajax_pattern or "Unknown", 
+                    "Unknown",                   
+                    "Yes", # Assume valid for legacy
                     f.start_line,
                     f.end_line,
                     f.endpoint_url or "Unknown/Dynamic",
@@ -522,8 +525,8 @@ class Reporter:
             
             # Color code rows (starting from row 2, after header)
             for row in range(2, ws.max_row + 1):
-                # Server Dependencies column (I = column 9)
-                server_cell = ws.cell(row=row, column=9)
+                # Server Dependencies column (J = column 10 now due to shift)
+                server_cell = ws.cell(row=row, column=10)
                 if server_cell.value == "Yes":
                     server_cell.fill = PatternFill("solid", fgColor="FFC7CE")  # Red
                     server_cell.font = Font(color="9C0006")
